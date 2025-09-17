@@ -1,2 +1,170 @@
-# ![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=🚀Visión+por+computador)
-To learn at the same time at i am learning in class
+# ![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=Visión+por+computador)
+
+# Práctica 1 de la asignatura Visión por computador.
+
+## Primeros pasos: instalación del entorno
+
+Para poder desarrollar y visualizar esta práctica debemos de, primero, de preparar el entornoo de desarrollo. Para ello, podemos seguir la práctica adjuntada por el docente de la asigntura:
+
+[enlace del github de la páctica](https://github.com/otsedom/otsedom.github.io/blob/main/VC/P1/README.md)
+
+Un breve resumen, sería:
+- Instalar Anaconda, matplotlib y opecv
+- activar el entorno virtual 
+- Descargar los archivos de la práctica
+- Instalar Python para VSCode
+- Escoger el enviroment del entorno
+
+
+----
+## **Tarea 1**:  Crea una imagen, p.e. de 800x800 píxeles, con la textura del tablero de ajedrez
+
+El código desarrollado es el siguiente:
+
+```py
+alto = 800
+ancho = 800
+gris_img = np.zeros((alto,ancho,1), dtype = np.uint8)
+lado = 100
+
+for fila in range(0, alto, lado):
+    for col in range(0, ancho, lado):
+        if ((fila // lado) + (col // lado)) % 2 == 0:
+            gris_img[fila:fila+lado, col:col+lado, 0] =  255 # casilla blanca
+
+plt.imshow(gris_img, cmap='gray')
+plt.show()
+```
+Para este ejercicio hemos establecido un tablero de ajedrez de lado 800 x 800px creando una matriz de todo ceros en escala de grises. 
+A su vez, declaramos el lado de nuestros cuadrados.
+
+Aquí realizamos un pequeño desglose:
+
+```py
+alto = 800
+ancho = 800
+gris_img = np.zeros((alto,ancho,1), dtype = np.uint8)
+lado = 100
+```
+
+Ahora usamos dos bucles para poder recorrer las filas y las columnas. además "pinta" de forma iterativa entre blanco y negro gracais a la línea ` gris_img[fila:fila+lado, col:col+lado, 0] = 255`  ya que previamente comprueba si ese cuadro del tablero es par o impar para alternar los colores de la siguiente manera:
+
+- Si la suma de la fila y la columna es par, el cuadrado se rellenará de color blanco.
+- Si no, se quedará negro.
+
+Por último queda la visualización:
+
+```python
+plt.imshow(gris_img, cmap='gray')
+plt.show()
+```
+- `plt.imshow(gris_img, cmap='gray')`: usa matplotlib para mostrar la matriz gris_img como una mapa, forzandolo a que se use escalas de grises.
+
+- `plt.show()`: muestra la imagen renderizada.
+
+----
+
+## **Tarea 2**: Crear una imagen estilo Mondrian (un ejemplo https://www3.gobiernodecanarias.org/medusa/ecoescuela/sa/2017/04/17/descubriendo-a-mondrian/ ) con las funciones de dibujo de OpenCV
+
+El código desarrollado es el siguiente:
+
+```python
+tamaño = 900
+#Crea una imagen con tres planos
+color_img = np.ones((tamaño,tamaño,3), dtype = np.uint8) * 255
+
+#Borde negro -> Cuadrado con grosor 30
+cv2.rectangle(color_img,(0,0),(tamaño,tamaño),(0,0,0),35)
+
+#Línea negra vertical larga 
+cv2.line(color_img,(220,0),(220,tamaño),(0,0,0),20)
+
+#Línea negra horizontal larga
+cv2.line(color_img,(0,730),(900,730),(0,0,0),20)
+
+#Línea negra horizontal límite rectángulo amarillo y cuadrado blanco 
+cv2.line(color_img,(0,510),(210,510),(0,0,0),20)
+
+#Línea negra vertical límite rectángulo blanco y cuadrado blanco
+cv2.line(color_img,(740,0),(740,900),(0,0,0),20)
+
+#Rectángulo relleno amarillo
+cv2.rectangle(color_img,(20,20),(210,500),(255,255,0),-1)
+
+#Rectángulo relleno rojo
+cv2.rectangle(color_img,(230,20),(880,720),(255,0,0),-1)
+
+#Rectángulo relleno azul
+cv2.rectangle(color_img,(20,740),(210,880),(0,0,255),-1)
+
+#Círculo de radio 15 relleno
+#cv2.circle(color_img,(ancho-60,30), 15, (0,0,255), -1)
+#Visualiza sin especificar el mapa de color gris
+
+plt.imshow(color_img) 
+plt.show()
+
+#Salva la imagen resultante a disco
+cv2.imwrite('imagen.jpg', color_img)
+
+```
+
+En este caso hay varios fragmentos de código repetidos, por lo que explicaremos brevemente las funciones de forma única:
+
+```py
+tamaño = 900
+#Crea una imagen con tres planos
+color_img = np.ones((tamaño,tamaño,3), dtype = np.uint8) * 255
+```
+Crea una imagen cuadrada de *tamaño x tamaño* px. Con los tres canales de color (RGB). Se inicializa en 1 y se mutiplica ese valor por 255 dando un lienzo en blanco.
+
+```py 
+cv2.rectangle(color_img,(20,740),(210,880),(0,0,255),-1)
+```
+
+La función de opencv rectangle crea un rectangulo y tiene la siguiente forma:
+
+`cv2.rectangle(source, pt1, pt2, color, grosor)`
+
+vamos a desglosar los argumentos:
+
+- `source`: es la imagen que vamos a modficar.
+- `pt1`: son las coordenadas de la esquina superior izquierda del rectángulo.
+- `pt2`:  son las coordenadas de la esquina inferior derecha del rectángulo.
+- `color`: es el color que va a tomar el rectangulo en formato RGB.
+- `grosor` (o en ingles *thickness*) : es el grosor de las líneas que dibujan el triangulo 
+
+```py
+cv2.line(color_img,(0,730),(900,730),(0,0,0),20)
+```
+
+La función de opencv line crea una línea recta de la siguiente forma:
+
+`cv2.line(source, pt1, pt2, color, grosor)` 
+
+Vamos a desglosar los argumentos:
+- `source`: es la imagen que vamos a modficar.
+- `pt1`: son las coordenadas del punto de inicio de la recta
+- `pt2`:  son las coordenadas del punto de fin de la recta.
+- `color`: es el color que va a tomar el rectangulo en formato RGB.
+- `grosor` (o en ingles *thickness*) : es el grosor de la línea.
+
+
+
+
+
+## **Tarea 3**: Modifica de forma libre los valores de un plano de la imagen.
+
+
+
+
+## **Tarea 4**: Pintar círculos en las posiciones del píxel más claro y oscuro de la imagen ¿Si quisieras hacerlo sobre la zona 8x8 más clara/oscura?
+
+## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
+
+
+
+
+
+
+
