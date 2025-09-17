@@ -19,7 +19,7 @@
 <details>
 <summary><b>📚 Tabla de contenidos</b></summary>
 
-</details>
+
 
 - [Primeros pasos: instalación del entorno](#primeros-pasos-instalación-del-entorno)
 - [Tarea 1](#tarea-1--crea-una-imagen-pe-de-800x800-píxeles-con-la-textura-del-tablero-de-ajedrez)
@@ -29,6 +29,7 @@
 - [Tarea 5](#tarea-5-llevar-a-cabo-una-propuesta-propia-de-pop-art)
 - [autores y reconocimientos](#autores-y-reconocimiento)
 
+</details>
 
 ## Primeros pasos: instalación del entorno
 
