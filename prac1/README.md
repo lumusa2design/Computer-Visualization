@@ -2,7 +2,12 @@
 
 [![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=Visión+por+computador)]()
 
+---
+<div style="center">
 
+[![Abrir Notebook](https://img.shields.io/badge/📘%20Jupyter-Notebook-F37626?style=for-the-badge&logo=jupyter&logoColor=white)](./prac1/VC_P1.ipynb)
+
+</div>
 
 
 ---
@@ -43,6 +48,8 @@ Un breve resumen, sería:
 - Descargar los archivos de la práctica
 - Instalar Python para VSCode
 - Escoger el environment del entorno
+
+> Además para la tarea 3, hemos usado la librería de python random
 
 
 ----
@@ -539,6 +546,31 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 - **Tarea 5**: `Luis`
 - **README**: `Luis`  
 
+--- 
+## Recursos usados
+
+### Tarea 1:
+- autocompletado del VisualStudio Code con Github Copilot.
+
+### Tarea 2:
+- autocompletado del VisualStudio Code con Github Copilot.
+
+### Tarea 3:
+- [omes-va](https://omes-va.com/cv2-flip-en-python-opencv/) parala rotación de la imagen
+
+### Tarea 4:
+- [Wikipedia](https://es.wikipedia.org/wiki/M%C3%A9todo_del_valor_umbral) para entender algoritmos de búsqueda de valor umbral
+- [Detección de bordes con precisión subpíxel en
+imágenes digitales: Interpolación lineal frente a
+esquemas de tipo no lineal](https://cgat.webs.upv.es/BigFiles/Charla_Hermosilla_JMA_06.pdf) donde vi el funcionamiento de los filtros.
+- [OpenCV](https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html) para buscar y entender el box filter.
+
+### Tarea 5
+- [geeksforgeeks](https://www.geeksforgeeks.org/blogs/cartooning-an-image-using-opencv-python/) para efecto cartoon
+
+### README
+
+- Uso de chatgpt para mejora visual del README
 
 
 
