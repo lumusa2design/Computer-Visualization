@@ -13,7 +13,21 @@
 
 </div>
 
+
 # Práctica 1 de la asignatura Visión por computador.
+
+<details>
+<summary><b>📚 Tabla de contenidos</b></summary>
+
+</details>
+
+- [Primeros pasos: instalación del entorno](#primeros-pasos-instalación-del-entorno)
+- [Tarea 1](#tarea-1--crea-una-imagen-pe-de-800x800-píxeles-con-la-textura-del-tablero-de-ajedrez)
+- [Tarea 2](#tarea-2-crear-una-imagen-estilo-mondrian-un-ejemplo-httpswww3gobiernodecanariasorgmedusaecoescuelasa20170417descubriendo-a-mondrian--con-las-funciones-de-dibujo-de-opencv)
+- [Tarea 3](#tarea-3-modifica-de-forma-libre-los-valores-de-un-plano-de-la-imagen)
+- [Tarea 4](#tarea-4-pintar-círculos-en-las-posiciones-del-píxel-más-claro-y-oscuro-de-la-imagen-si-quisieras-hacerlo-sobre-la-zona-8x8-más-claraoscura)
+- [Tarea 5](#tarea-5-llevar-a-cabo-una-propuesta-propia-de-pop-art)
+
 
 ## Primeros pasos: instalación del entorno
 
@@ -484,7 +498,13 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 - `bitwise_and`: aplica los bordes detectados a la imagen que se ha suavizado antes.
 
 
+--- 
+<div align="center">
 
+[![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
+[![Autor: Nombre2](https://img.shields.io/badge/Autor-guillecab7-6A5ACD?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guillecab7)
+
+</div>
 
 
 
