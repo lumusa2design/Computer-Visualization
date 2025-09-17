@@ -155,7 +155,102 @@ Vamos a desglosar los argumentos:
 
 ## **Tarea 3**: Modifica de forma libre los valores de un plano de la imagen.
 
+El código desarrollado es el siguiente:
 
+
+```py
+vid = cv2.VideoCapture(0)
+import random
+counter = 0
+while(True):      
+    # fotograma a fotograma
+    ret, frame = vid.read()
+
+    if ret:
+        #Separamos canales
+        b = frame[:,:,0]//random.randint(1,4)
+        g = frame[:,:,1]//random.randint(1,4)
+        r = frame[:,:,2]//random.randint(1,4)
+        #Dimensiones imagen de entrada
+        h, w, c = frame.shape
+        #Concateamos en horizontal los tres planos del fotograma
+        collage = cv2.merge((b, g, r))
+        if counter >= 150 and counter < 300:
+            collage = cv2.flip(collage, 1)
+        if counter >= 300:
+            counter = 0
+        counter += 1
+        # Muestra fotograma redimensionando a la mitad para que quepa en pantalla
+        cv2.imshow('RGB', cv2.resize(collage, (int(w),int(h)),cv2.INTER_NEAREST))
+    
+    # Detenemos pulsado ESC
+    if cv2.waitKey(20) == 27:
+        break
+  
+# Libera el objeto de captura
+vid.release()
+# Destruye ventanas
+cv2.destroyAllWindows()
+```
+
+Vamos a desglosarlo:
+
+```py
+vid = cv2.VideoCapture(0)
+```
+
+Abre la primera cámara que capte el ordenador. Si no fuera la 0 se puede sustituir por 1, 2 o 3.
+
+```py
+ret, frame = vid.read()
+```
+
+- `ret`: nos indica si la captura ha ido bien.
+- `frame`: contiene la imagen que capta la imagen.
+
+```py
+        b = frame[:,:,0]//random.randint(1,4)
+        g = frame[:,:,1]//random.randint(1,4)
+        r = frame[:,:,2]//random.randint(1,4)
+```
+Separa los canales y los divide por un valor aleatorio entre 1 y 4. Como se actualiza de forma constante, cambia de color de forma aleatoria cada vez que se actualiza la cámara.
+
+```py
+        collage = cv2.merge((b, g, r))
+```
+
+Vuelve a unir los canales de color de la imagen.
+
+
+```py
+if counter >= 150 and counter < 300:
+    collage = cv2.flip(collage, 1)
+if counter >= 300:
+    counter = 0
+counter += 1
+```
+
+Usa la función flip de cv2 que invierte en el eje horizontal la imagen cada 150 frames.
+
+```py
+cv2.imshow('RGB', cv2.resize(collage, (int(w),int(h)), cv2.INTER_NEAREST))
+```
+
+Muestra el frame, a su tamaño original, y reescala mediante el método de aproximación del vecino más cercano.
+
+```py
+if cv2.waitKey(20) == 27:
+    break
+```
+
+sale del bucle de lectura de cámara. Espera 20 milisegundos por cada frame y si se pulsa escape sale.
+
+```py
+vid.release()
+cv2.destroyAllWindows()
+```
+
+Libera y cierra la cámara.
 
 
 ## **Tarea 4**: Pintar círculos en las posiciones del píxel más claro y oscuro de la imagen ¿Si quisieras hacerlo sobre la zona 8x8 más clara/oscura?
