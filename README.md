@@ -16,12 +16,12 @@
 Este es el hub para poder acceder a las diferentes practicas de la asignautras visión por computador. Se irá actualizando según vayan añadiendose prácticas.
 
 
-<details>
-<summary><b> 📚 Tabla de contenidos</b></summary>
+ ## 📚 Tabla de contenidos
+
 - [Practica 1](./prac1/README.md)
+    - [Cuaderno de Jupyter](./prac1/VC_P1.ipynb)
 
 
-</details>
 
 
 ## Autores y Reconocimiento
