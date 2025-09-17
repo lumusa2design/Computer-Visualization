@@ -1,5 +1,8 @@
 # ![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=Visión+por+computador)
 
+![Python](https://img.shields.io/badge/python-3.10-blue?logo=python)
+![OpenCV](https://img.shields.io/badge/OpenCV-Enabled-green?logo=opencv)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-Graphs-orange?logo=plotly)
 # Práctica 1 de la asignatura Visión por computador.
 
 ## Primeros pasos: instalación del entorno
@@ -254,6 +257,8 @@ Libera y cierra la cámara.
 
 
 ## **Tarea 4**: Pintar círculos en las posiciones del píxel más claro y oscuro de la imagen ¿Si quisieras hacerlo sobre la zona 8x8 más clara/oscura?
+
+
 
 ## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
 
