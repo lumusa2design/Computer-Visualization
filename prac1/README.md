@@ -325,6 +325,65 @@ Caluclo de las coordenadas de los puntos más oscuros y claros.
 
 Finalmente mostramos el resultado calculado en la imagen en blanco y negro, sobre la imagen a color.
 
+### Parte 2: de un cuadrado de 8x8 pixeles en vez de un circulo de 1 pixel
+
+El código desarrollado es el siguiente: 
+```python
+vid = cv2.VideoCapture(0)
+
+  
+px = -1
+while(True):      
+    # fotograma a fotograma
+    ret, frame = vid.read()
+
+    if ret: 
+
+        gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        h, w = gray_scale.shape
+        sums_8x8 = cv2.boxFilter(gray_scale, ddepth=-1, ksize=(8, 8), normalize=False, borderType=cv2.BORDER_REFLECT101)
+        
+        lightest_idx = np.argmax(gray_scale)
+        darkest_idx  = np.argmin(gray_scale)
+        cy_light, cx_light = divmod(lightest_idx, w)
+        cy_dark,  cx_dark  = divmod(darkest_idx,  w)
+
+        tlx_light = min(max(cx_light - 4, 0), w - 8)
+        tly_light = min(max(cy_light - 4, 0), h - 8)
+        tlx_dark  = min(max(cx_dark  - 4, 0), w - 8)
+        tly_dark  = min(max(cy_dark  - 4, 0), h - 8)
+
+        cv2.rectangle(frame, (tlx_dark,  tly_dark),  (tlx_dark  + 8, tly_dark  + 8), (0,   0, 255), 2) # rojo: más oscuro
+        cv2.rectangle(frame, (tlx_light, tly_light), (tlx_light + 8, tly_light + 8), (0, 255,   0), 2) # verde: más claro
+        cv2.imshow('Cam', frame)
+
+
+            
+
+```
+En este caso el código es muy similar al anterior, así que solo comentaremos las piezas clave:
+
+```python
+        sums_8x8 = cv2.boxFilter(gray_scale, ddepth=-1, ksize=(8, 8), normalize=False, borderType=cv2.BORDER_REFLECT101)
+```
+
+`boxFilter(src, ddepth, ksize, normalize, borderType)`:
+
+- `src`: imagen sobre la que vamos a editar.
+- `ksize`: define la ventana local (el cuadrado).
+- `normalize`: en este caso devuelve la suma de intensidades. Si se usase con True devolvería la media.
+- `ddepth`:  Conservir el tipo de dato.
+- `borderType`: manejo de bordes, en este caso, para la reflexión.
+
+```python
+        tlx_light = min(max(cx_light - 4, 0), w - 8)
+        tly_light = min(max(cy_light - 4, 0), h - 8)
+        tlx_dark  = min(max(cx_dark  - 4, 0), w - 8)
+        tly_dark  = min(max(cy_dark  - 4, 0), h - 8)
+```
+
+Son bloques de control asegurandose que se centre en el pixel centrado, o que no se sobresalga por ningún lado ni negativo ni positivo de la imagen.
+
 ## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
 
 
