@@ -529,7 +529,15 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 
 </div>
 
+--- 
+## Trabajo realizado
 
+- **Tarea 1**: `Guillermo`
+- **Tarea 2**: `Guillermo` 
+- **Tarea 3**: `Luis` 
+- **Tarea 4**: `Luis` 
+- **Tarea 5**: `Luis`
+- **README**: `Luis`  
 
 
 
