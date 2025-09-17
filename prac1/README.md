@@ -91,6 +91,8 @@ plt.show()
 
 - `plt.show()`: muestra la imagen renderizada.
 
+### Resultados:
+![imagen del ajedrez](./chess.png)
 ----
 
 ## **Tarea 2**: Crear una imagen estilo Mondrian (un ejemplo https://www3.gobiernodecanarias.org/medusa/ecoescuela/sa/2017/04/17/descubriendo-a-mondrian/ ) con las funciones de dibujo de OpenCV
@@ -178,7 +180,8 @@ Vamos a desglosar los argumentos:
 - `color`: es el color que va a tomar el rectangulo en formato RGB.
 - `grosor` (o en ingles *thickness*) : es el grosor de la línea.
 
-
+### Resultados:
+![imagen tipo Mondrian](./arte.png)
 
 
 
@@ -281,6 +284,7 @@ cv2.destroyAllWindows()
 
 Libera y cierra la cámara.
 
+![random color](random_color.png)
 
 ## **Tarea 4**: Pintar círculos en las posiciones del píxel más claro y oscuro de la imagen ¿Si quisieras hacerlo sobre la zona 8x8 más clara/oscura?
 
@@ -348,6 +352,10 @@ Caluclo de las coordenadas de los puntos más oscuros y claros.
 
 Finalmente mostramos el resultado calculado en la imagen en blanco y negro, sobre la imagen a color.
 
+### Resultado:
+
+![puntos maximos](max_min_light.png)
+
 ### Parte 2: de un cuadrado de 8x8 pixeles en vez de un circulo de 1 pixel
 
 El código desarrollado es el siguiente: 
@@ -380,7 +388,6 @@ while(True):
         cv2.rectangle(frame, (tlx_light, tly_light), (tlx_light + 8, tly_light + 8), (0, 255,   0), 2) # verde: más claro
         cv2.imshow('Cam', frame)
 
-
             
 
 ```
@@ -406,6 +413,11 @@ En este caso el código es muy similar al anterior, así que solo comentaremos l
 ```
 
 Son bloques de control asegurandose que se centre en el pixel centrado, o que no se sobresalga por ningún lado ni negativo ni positivo de la imagen.
+
+### Resultados:
+
+
+![rectangulo maximo](max_min_rectangle.png)
 
 ## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
 
@@ -499,6 +511,9 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 - `bilateralFilter`: suaviza pero conserva los bordes, aumentando el efecto tipo ilustración
 - `bitwise_and`: aplica los bordes detectados a la imagen que se ha suavizado antes.
 
+### Resultado:
+
+![arte moderno](modern_art.png)
 --- 
 ## Autores y Reconocimiento
 
