@@ -393,6 +393,99 @@ Son bloques de control asegurandose que se centre en el pixel centrado, o que no
 
 ## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
 
+```python
+vid = cv2.VideoCapture(0)
+
+#Dimensiones de la cámara
+w = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+h = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+#Fuerzo a mitad de resolución para ocupar menos pantalla
+w=int(w/2)
+h=int(h/2)
+vid.set(cv2.CAP_PROP_FRAME_WIDTH, w) #En Mac no reacciona a estos comandos
+vid.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
+
+#Imagen conjunta 2x original
+collage = np.zeros((h*2,w*2,3), dtype = np.uint8)
+tl = collage[0:h,0:w]
+tr = collage[0:h,w:w+w]
+bl = collage[h:h+h,0:w]
+br = collage[h:h+h,w:w+w]
+
+while True:      
+    # fotograma a fotograma
+    ret, frameIN = vid.read()
+
+    #Menor tamaño
+    frame = cv2.resize(frameIN, (int(w),int(h)),cv2.INTER_AREA)
+    
+    if ret:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray_scale = cv2.medianBlur(gray, 3)
+        edges = cv2.adaptiveThreshold(gray_scale, 255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY, 11, 2)
+        colour = cv2.bilateralFilter(frame, 9, 300, 300)
+        cartoon = cv2.bitwise_and(colour, colour, mask=edges)
+        
+        #Separamos canales
+        r = cartoon[:,:,2]
+        g = cartoon[:,:,1]
+        b = cartoon[:,:,0]
+
+        #Jugamos con los valores de los planos
+        tl[:,:,0] = b
+        tl[:,:,1] = g
+        tl[:,:,2] = r
+
+        tr[:,:,0] = 255 - r
+        tr[:,:,1] = g
+        tr[:,:,2] = b
+        
+        bl[:,:,0] = r
+        bl[:,:,1] = 255 - b
+        bl[:,:,2] = g
+
+        br[:,:,0] = b
+        br[:,:,1] = g
+        br[:,:,2] = 255 - r
+    
+        # Muestra composición
+        cv2.imshow('Cam', collage)
+
+
+    
+    # Detenemos pulsado ESC
+    if cv2.waitKey(20) == 27:
+        break
+  
+# Libera el objeto de captura
+vid.release()
+# Destruye ventanas
+cv2.destroyAllWindows()
+```
+
+Esto es lo que hemos añadido:
+
+```python
+gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+gray_scale = cv2.medianBlur(gray, 3)
+edges = cv2.adaptiveThreshold(gray_scale, 255,
+                              cv2.ADAPTIVE_THRESH_MEAN_C,
+                              cv2.THRESH_BINARY, 11, 2)
+colour = cv2.bilateralFilter(frame, 9, 300, 300)
+cartoon = cv2.bitwise_and(colour, colour, mask=edges)
+```
+
+En este caso, hemos convertido en gris una imagen como hicimos en el caso de los claros y oscuros, y sobre ella hemos aplicado los siguientes filtros:
+
+- `medianBlur`: Suavizado de ruido para definir mejor los bordes.
+- `adaptativeThreshold`: Crea bordes tipo comic.
+- `bilateralFilter`: suaviza pero conserva los bordes, aumentando el efecto tipo ilustración
+- `bitwise_and`: aplica los bordes detectados a la imagen que se ha suavizado antes.
+
+
+
+
 
 
 
