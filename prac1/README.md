@@ -27,11 +27,12 @@
 - [Tarea 3](#tarea-3-modifica-de-forma-libre-los-valores-de-un-plano-de-la-imagen)
 - [Tarea 4](#tarea-4-pintar-círculos-en-las-posiciones-del-píxel-más-claro-y-oscuro-de-la-imagen-si-quisieras-hacerlo-sobre-la-zona-8x8-más-claraoscura)
 - [Tarea 5](#tarea-5-llevar-a-cabo-una-propuesta-propia-de-pop-art)
+- [autores y reconocimientos](#autores-y-reconocimiento)
 
 
 ## Primeros pasos: instalación del entorno
 
-Para poder desarrollar y visualizar esta práctica debemos de, primero, de preparar el entornoo de desarrollo. Para ello, podemos seguir la práctica adjuntada por el docente de la asigntura:
+Para poder desarrollar y visualizar esta práctica debemos de, primero, de preparar el entorno de desarrollo. Para ello, podemos seguir la práctica adjuntada por el docente de la asigntura:
 
 [enlace del github de la páctica](https://github.com/otsedom/otsedom.github.io/blob/main/VC/P1/README.md)
 
@@ -40,7 +41,7 @@ Un breve resumen, sería:
 - activar el entorno virtual 
 - Descargar los archivos de la práctica
 - Instalar Python para VSCode
-- Escoger el enviroment del entorno
+- Escoger el environment del entorno
 
 
 ----
@@ -497,14 +498,22 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 - `bilateralFilter`: suaviza pero conserva los bordes, aumentando el efecto tipo ilustración
 - `bitwise_and`: aplica los bordes detectados a la imagen que se ha suavizado antes.
 
-
 --- 
+## Autores y Reconocimiento
+
 <div align="center">
 
 [![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
+
 [![Autor: Nombre2](https://img.shields.io/badge/Autor-guillecab7-6A5ACD?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guillecab7)
 
+[![Docente: Profe](https://img.shields.io/badge/Docente-OTSEDOM-0E7AFE?style=for-the-badge&logo=googlescholar&logoColor=white)](https://github.com/otsedom)
+
+[![Centro: EII](https://img.shields.io/badge/Centro-Escuela%20de%20Ingenier%C3%ADa%20Inform%C3%A1tica-00A86B?style=for-the-badge)](https://www.eii.ulpgc.es/es)
+
 </div>
+
+
 
 
 
