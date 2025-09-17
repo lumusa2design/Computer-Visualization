@@ -550,10 +550,10 @@ En este caso, hemos convertido en gris una imagen como hicimos en el caso de los
 ## Recursos usados
 
 ### Tarea 1:
-- autocompletado del VisualStudio Code con Github Copilot.
+- Autocompletado del VisualStudio Code con Github Copilot.
 
 ### Tarea 2:
-- autocompletado del VisualStudio Code con Github Copilot.
+- Código de ayuda del ejercicio anterior con rectángulos rellenos, bordeados y rectas
 
 ### Tarea 3:
 - [omes-va](https://omes-va.com/cv2-flip-en-python-opencv/) parala rotación de la imagen
