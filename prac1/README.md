@@ -1,4 +1,7 @@
-# ![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=Visión+por+computador)
+
+[![Texto en movimiento](https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&duration=1500&pause=9000&color=8A36D2&center=true&vCenter=true&width=400&height=50&lines=Visión+por+computador)]()
+
+---
 
 ![Python](https://img.shields.io/badge/python-3.10-blue?logo=python)
 ![OpenCV](https://img.shields.io/badge/OpenCV-Enabled-green?logo=opencv)
@@ -258,9 +261,72 @@ Libera y cierra la cámara.
 
 ## **Tarea 4**: Pintar círculos en las posiciones del píxel más claro y oscuro de la imagen ¿Si quisieras hacerlo sobre la zona 8x8 más clara/oscura?
 
+El código desarrollado es el siguiente:
 
+```py
+vid = cv2.VideoCapture(0)
+
+# Tipografía para mostrar texto
+font = cv2.FONT_HERSHEY_SIMPLEX
+  
+px = -1
+while(True):      
+    # fotograma a fotograma
+    ret, frame = vid.read()
+
+    if ret: 
+
+        gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        h, w = gray_scale.shape
+        lightnest = np.argmax(gray_scale) 
+        darkest = np.argmin(gray_scale)
+
+        index_darkest_y, index_darkest_x = divmod(darkest, w)
+        index_lightnest_y, index_lightnest_x = divmod(lightnest, w)
+
+        cv2.circle(frame, (int(index_darkest_x), int(index_darkest_y)), 1, (0, 0, 255),2)
+        cv2.circle(frame, (int(index_lightnest_x), int(index_lightnest_y)), 1, (0, 255, 0), 2)
+        cv2.imshow('Cam', frame)
+
+            
+
+        
+    # Detenemos pulsado ESC
+    if cv2.waitKey(20) == 27:
+        break
+  
+# Libera el objeto de captura
+vid.release()
+# Destruye ventanas
+cv2.destroyAllWindows()
+```
+Desglosando, vemos que hay elementos que hemos visto en otras tareas. 
+
+```python
+        gray_scale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+```
+Convierte a escalas de grises las imagenes, esto facilita la búsqueda y cálculo de máximos y mínimos
+
+```py
+        lightnest = np.argmax(gray_scale) 
+        darkest = np.argmin(gray_scale)
+```
+
+gracias a *argmax* y *argmin* de la librería *numpy* podemos encontrar los valores más claros y oscuros en una imagen de forma sencilla y rápida. Gracias a la conversión anterior, ya que de no haber usado esta función anterior, con está el tiempo de cálculo y búsqueda son bastante altos. Ya que numpy usa funciones directamente del núcleo para sus cálculos, acelerando el proceso.
+
+Se puede ver más información sobre estas funciones en [numpy](https://numpy.org/doc/2.0/reference/generated/numpy.argmax.html), o en el propio [repositorio](https://github.com/numpy/numpy/blob/v2.0.0/numpy/_core/fromnumeric.py#L1208-L1298) donde se puede ver como se desarrollo.
+
+```python
+        index_darkest_y, index_darkest_x = divmod(darkest, w)
+        index_lightnest_y, index_lightnest_x = divmod(lightnest, w)
+```
+
+Caluclo de las coordenadas de los puntos más oscuros y claros.
+
+Finalmente mostramos el resultado calculado en la imagen en blanco y negro, sobre la imagen a color.
 
 ## **Tarea 5**: Llevar a cabo una propuesta propia de pop art
+
 
 
 
