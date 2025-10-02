@@ -540,6 +540,83 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+Vamos con la explicación del código paso por paso.
+Dibuja una barra de cabecera negra en la parte superior de la imagen y escribe un texto.
+    - img: frame BGR de entrada
+    - text: cadena a mostrar en la cabecera
+    Devuelve una copia de la imagen con la cabecera dibujada.
+
+```python
+def draw_header_bar(img, text):
+    out = img.copy()
+    cv.rectangle(out, (0, 0), (out.shape[1], 30), (0, 0, 0), -1)
+    cv.putText(out, text, (10, 22), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1, cv.LINE_AA)
+    return out
+```
+
+Convierte una imagen BGR a escala de grises
+```python
+def to_gray(img):
+    return cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+```
+
+ Estima una máscara binaria del primer plano (persona/objeto)
+      1 - Suaviza el gris para reducir ruido
+      2 - Aplica el sustractor de fondo (MOG2) para obtener el mapa de primer plano.
+      3 - Umbral alto (200) para quedarnos con 0/255 y eliminar semi-tonos (posibles sombras/restos).
+      4 - OPEN para quitar ruido pequeño; CLOSE para cerrar huecos en la silueta.
+    Devuelve 'mask' (uint8 con 0/255).
+
+```python
+def detect_person_mask(gray, bg_subtractor, kernel):
+    blurred = cv.GaussianBlur(gray, (5,5), 0)
+    fg = bg_subtractor.apply(blurred)
+    _, mask = cv.threshold(fg, 200, 255, cv.THRESH_BINARY)
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, iterations=2)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=2)
+    return mask
+
+```
+Busca el contorno de mayor área en la máscara y calcula su centroide.
+    - min_area: área mínima para considerar que el contorno es válido (evita ruido).
+    Devuelve:
+      - cnt: contorno (np.array de puntos) o None si no hay válido.
+      - (cx, cy): centroide (int,int) o None si no se puede calcular.
+
+```python
+def largest_contour_centroid(mask, min_area=10000):
+    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None, None
+    areas = [cv.contourArea(c) for c in contours]
+    i = int(np.argmax(areas))
+    if areas[i] < min_area:
+        return None, None
+    cnt = contours[i]
+    M = cv.moments(cnt)
+    if M["m00"] == 0:
+        return cnt, None
+    cx = int(M["m10"]/M["m00"]); cy = int(M["m01"]/M["m00"])
+    return cnt, (cx, cy)
+```
+
+Aplica un efecto de 'cortina digital' horizontal:
+    - Mantiene brillante una franja vertical centrada en 'center_x' de semiancho 'window_half_width'.
+    - Fuera de esa franja, atenúa suavemente (no deja negro del todo: piso del 25%).
+    Devuelve la imagen BGR atenuada según esa máscara suave.
+
+```python
+def apply_digital_curtain(frame, center_x, window_half_width):
+    h, w = frame.shape[:2]
+    x = np.arange(w, dtype=np.float32)
+    dist = np.abs(x - float(center_x))
+    soft = 1.0 - np.clip((dist - window_half_width) / max(window_half_width, 1), 0.0, 1.0)
+    soft = 0.25 + 0.75 * soft 
+    mask_1d = soft.astype(np.float32)
+    mask_2d = np.tile(mask_1d[None, :], (h, 1))
+    masked = (frame.astype(np.float32) * mask_2d[..., None]).astype(np.uint8)
+    return masked
+```
 
  <div align="center">
 
@@ -559,7 +636,7 @@ if __name__ == "__main__":
 - **Tarea 1**: `Guillermo`
 - **Tarea 2**: `Guillermo (Sobel) y Luis (Gráfica)` 
 - **Tarea 3**: `Luis` 
-- **Tarea 4**: `Guillermo` 
+- **Tarea 4**: `Guillermo y Luis` 
 - **README**: `Guillermo y Luis`  
 
 --- 
