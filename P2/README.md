@@ -474,7 +474,7 @@ if __name__ == "__main__":
 - **Tarea 1**: `Guillermo`
 - **Tarea 2**: `Guillermo (Sobel) y Luis (Gráfica)` 
 - **Tarea 3**: `Luis` 
-- **Tarea 4**: `Guillermo` 
+- **Tarea 4**: `Guillermo y Luis` 
 - **README**: `Guillermo y Luis`  
 
 --- 
