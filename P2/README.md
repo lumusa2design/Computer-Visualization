@@ -38,24 +38,30 @@
 
  ## Tarea 1: Realiza la cuenta de píxeles blancos por filas (en lugar de por columnas). Determina el valor máximo de píxeles blancos para filas, maxfil, mostrando el número de filas y sus respectivas posiciones, con un número de píxeles blancos mayor o igual que 0.90*maxfil.
 
- El códgo desarrollado fue el siguiente:
+ El código desarrollado fue el siguiente:
 
 
  ```python
 img = cv2.imread('mandril.jpg') 
 
 canny = cv2.Canny(img, 100, 200)
-#El contenido de la imagen resultado de Canny, son valores 0 o 255, lo compruebas al descomentar
-#print(canny)
-#Cuenta el número de píxeles blancos (255) por columna
-#Suma los valores de los pixeles por columna
-col_counts = cv2.reduce(canny, 0, cv2.REDUCE_SUM, dtype=cv2.CV_32SC1)
+
+#Cuenta el número de píxeles blancos (255) por fila
 row_counts = cv2.reduce(canny, 1, cv2.REDUCE_SUM, dtype=cv2.CV_32SC1)
 
-#Normaliza en base al número de filas, primer valor devuelto por shape, y al valor máximo del píxel (255)
-#El resultado será el número de píxeles blancos por columna
-rows = col_counts[:,] / (255 * canny.shape[0])
-cols = row_counts[:,] / (255 * canny.shape[1])
+rows = row_counts[:,] / (255 * canny.shape[0])
+
+# Calcula máximo
+maxfil = int(np.max(rows))
+
+# Filas que cumplen >= 0.9*maxfil
+umbral = 0.9 * maxfil
+
+print(f"Valor máximo de píxeles blancos por fila (maxfil): {maxfil}")
+print(f"Filas con ≥ 0.9*maxfil ({umbral}):")
+for i in range(len(rows)):
+    if rows[i] >= umbral:
+        print(f"Fila {i}, píxeles blancos: {rows[i]}")
 
 #Muestra dicha cuenta gráficamente
 plt.figure()
@@ -66,14 +72,15 @@ plt.imshow(canny, cmap='gray')
 
 plt.subplot(1, 2, 2)
 plt.title("Respuesta de Canny")
-plt.xlabel("Columnas")
+plt.xlabel("Filas")
 plt.ylabel("% píxeles")
-plt.plot(cols)
-#Rango en x definido por las columnas
+plt.plot(rows)
+#Rango en x definido por las filas
 plt.xlim([0, canny.shape[0]])
+plt.show()
  ```
 
- En este caso lo primero que hacemos es leer una imagen, calcular los bordes gracias a Canny , contar cuantos píxeles ha por columnas y por filas, normalizamos para expresarlo en porcentaje y muestra la imagen procesada por canny.
+ En este caso lo primero que hacemos es leer una imagen, calcular los bordes gracias a Canny , contar cuantos píxeles ha por filas, normalizamos para expresarlo en porcentaje y muestra la imagen procesada por canny.
 
  Ahora pasaremos a desglosarlo por partes, nos saltaremos la lectura de la imagen en disco, y todo lo mencionado en la anterior práctica.
 
@@ -86,9 +93,24 @@ canny = cv2.Canny(img, 100, 200)
  ```python
 row_counts = cv2.reduce(canny, 1, cv2.REDUCE_SUM, dtype=cv2.CV_32SC1)
  ```
- No vamos a explicar el `col_counts`debido a que, se explica en la propia práctica, sin embargo, en este caso, estamos contando las filas en vez de las columnas marcando el segundo valor de la cuentade Canny y sumando cada fila.
+ En este caso, estamos contando las filas en vez de las columnas por eso pasamos a poner 1 en el segundo argumento de la función.
 
-El resto del ejercicio consiste en la visualizació de lo calculado usando matplot lib como en en caso anterior.
+ ```python
+maxfil = int(np.max(rows))
+umbral = 0.9 * maxfil
+ ```
+ Calculamos el máximo (maxfil) y el umbral pedido en el ejercicio, además mostramos las filas y sus posiciones con un número de píxeles blancos mayor o igual que el umbral con el siguiente bucle.
+
+  ```python
+print(f"Valor máximo de píxeles blancos por fila (maxfil): {maxfil}")
+print(f"Filas con ≥ 0.9*maxfil ({umbral}):")
+for i in range(len(rows)):
+    if rows[i] >= umbral:
+        print(f"Fila {i}, píxeles blancos: {rows[i]}")
+
+ ```
+
+El resto del ejercicio consiste en la visualización de lo calculado usando matplot lib como en en caso anterior.
 
 ## Tarea 2: TAREA: Aplica umbralizado a la imagen resultante de Sobel (convertida a 8 bits), y posteriormente realiza el conteo por filas y columnas similar al realizado en el ejemplo con la salida de Canny de píxeles no nulos. Calcula el valor máximo de la cuenta por filas y columnas, y determina las filas y columnas por encima del 0.90*máximo. Remarca con alguna primitiva gráfica dichas filas y columnas sobre la imagen del mandril. ¿Cómo se comparan los resultados obtenidos a partir de Sobel y Canny?
 ```python
