@@ -201,6 +201,9 @@ for col in filas_destacadas:
 ```
 En el resto del ejercicio imprimimos los resultados y ambas gráficas, la de Sobel y la de Canny para compararlas.
 
+Como podemos ver en la comparación de la práctica, el sobel detecta con mayor precisión de los bordes dado que primero suaviza la imagen y reduce el ruido. El sobel genera bordes más suaves y definidos
+
+
 
 ## Tarea 3 Proponer un demostrador que capture las imágenes de la cámara, y les permita exhibir lo aprendido en estas dos prácticas ante quienes no cursen la asignatura :). Es por ello que además de poder mostrar la imagen original de la webcam, permita cambiar de modo, incluyendo al menos dos procesamientos diferentes como resultado de aplicar las funciones de OpenCV trabajadas hasta ahora.
 ```python
@@ -338,7 +341,89 @@ if __name__ == "__main__":
     cv.destroyAllWindows()
 ```
 
-# Tarea 4 TAREA: Tras ver los vídeos My little piece of privacy, Messa di voce y Virtual air guitar proponer un demostrador reinterpretando la parte de procesamiento de la imagen, tomando como punto de partida alguna de dichas instalaciones.
+En este caso hemos generados 5 modos de visualización básicos con lo que hemos ido trabajando en las dos prácticas. El flujo genenral del programa será el siguiente.
+
+<ol>
+<li>Abre la webcam</li>
+<li>Durante su ejecución, visualizar y alternar los diferentes modos</li>
+<li>Cerrar las pestañas</li>
+</ol>
+
+**Controles**
+- `M`: siguiente modo.
+- `0-4`: modos especificos  
+- `V`: Cambia la vista. (Solo en algunos modos)
+
+```python
+def mode_gray_equalize(img):
+    gray_image = gray_convett(img)
+    equalize = cv.equalizeHist(gray_image)                        
+    return cv.cvtColor(equalize, cv.COLOR_GRAY2BGR)
+```
+
+Ecualiza la imagen que se le pasa por cámara y envía a la salida una imagen en escaa de grises.
+
+```python
+def canny_mode(img):
+    gray = cv.GaussianBlur(gray_convett(img), (5, 5), 0)        
+    edges = cv.Canny(gray, 100, 200)
+    return cv.cvtColor(edges, cv.COLOR_GRAY2BGR)
+```
+
+Realiza el calculo de Canny y lo muestra por pantalla.
+
+```python
+def cartoon_mode(img):
+    gray = gray_convett(img)
+    gray = cv.medianBlur(gray, 5)
+    edges = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C,
+                                 cv.THRESH_BINARY, 11, 4)
+    color = cv.bilateralFilter(img, 9, 250, 250)
+    cartoon = cv.bitwise_and(color, color, mask=edges)
+    return cartoon
+```
+
+Cogido de la práctica anterior.
+
+```python
+def alpha_blend_uniform(base_bgr, color_bgr, alpha):
+    solid = np.full_like(base_bgr, color_bgr, dtype=np.uint8)
+    return cv.addWeighted(base_bgr, 1.0 - alpha, solid, alpha, 0.0)
+```
+
+Crea una imagen de un color solido y lo mezcla con la imagen.
+
+```python
+def mode_uniform_tint(img, tint_key, alpha, view_mode=0):
+    tinted = alpha_blend_uniform(img, COLORS[tint_key], alpha)
+    hint = f"tinte={tint_key} alpha={alpha:.2f} view={'comp' if view_mode==0 else 'res'}"
+    if view_mode == 0:
+        side = np.hstack([img, tinted])
+        if side.shape[1] > 1280:
+            side = cv.resize(side, (1280, int(1280*side.shape[0]/side.shape[1])))
+        return side, hint
+    else:
+        return tinted, hint
+```
+Devuelve la comparativa, esta funcion si tiene para comparar con V.
+
+```python
+def neon_line(img):
+    gray_img = cv.GaussianBlur( gray_convett(img), (5, 5), 0)
+    edges = cv.Canny(gray_img, 100, 200)
+    halo =  cv.dilate(edges, np.ones ((7,7), np.uint8),1)
+    halo = cv.GaussianBlur(halo, (7,7), 0)
+    alpha = cv.normalize(halo, None, 0, 1.0, cv.NORM_MINMAX, cv.CV_32F)
+    color= np.zeros_like(img, dtype=np.uint8)
+    color[:] = (255,0,255)
+    neon = (alpha[..., None] * color).astype(np.uint8)
+    out = cv.addWeighted(img, 0.65, neon, 0.80, 0.0)
+    return out
+```
+
+Gracias al blur  y al calculo de bordes hace un efecto neón.
+
+## Tarea 4 TAREA: Tras ver los vídeos My little piece of privacy, Messa di voce y Virtual air guitar proponer un demostrador reinterpretando la parte de procesamiento de la imagen, tomando como punto de partida alguna de dichas instalaciones.
 ```python
 import cv2 as cv
 import numpy as np
