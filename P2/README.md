@@ -543,11 +543,8 @@ if __name__ == "__main__":
 Vamos con la explicación del código paso por paso.  
 
 Esta función dibuja una barra de cabecera negra en la parte superior de la imagen y escribe un texto.  
-
     - img: frame BGR de entrada  
-
     - text: cadena a mostrar en la cabecera  
-
     Devuelve una copia de la imagen con la cabecera dibujada.  
 
 ```python
@@ -565,7 +562,6 @@ def to_gray(img):
 ```
 
  Estima una máscara binaria del primer plano (persona/objeto)
-
       1 - Suaviza el gris para reducir ruido  
       2 - Aplica el sustractor de fondo (MOG2) para obtener el mapa de primer plano.   
       3 - Umbral alto (200) para quedarnos con 0/255 y eliminar semi-tonos (posibles sombras/restos).  
@@ -609,7 +605,7 @@ Aplica un efecto de 'cortina digital' horizontal:
     - Mantiene brillante una franja vertical centrada en 'center_x' de semiancho 'window_half_width'.  
     - Fuera de esa franja, atenúa suavemente (no deja negro del todo: piso del 25%).  
     Devuelve la imagen BGR atenuada según esa máscara suave.  
-    
+
 ```python
 def apply_digital_curtain(frame, center_x, window_half_width):
     h, w = frame.shape[:2]
