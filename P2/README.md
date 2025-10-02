@@ -455,11 +455,15 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-Vamos con la explicación del código paso por paso.
-Dibuja una barra de cabecera negra en la parte superior de la imagen y escribe un texto.
-    - img: frame BGR de entrada
-    - text: cadena a mostrar en la cabecera
-    Devuelve una copia de la imagen con la cabecera dibujada.
+Vamos con la explicación del código paso por paso.  
+
+Esta función dibuja una barra de cabecera negra en la parte superior de la imagen y escribe un texto.  
+
+    - img: frame BGR de entrada  
+
+    - text: cadena a mostrar en la cabecera  
+
+    Devuelve una copia de la imagen con la cabecera dibujada.  
 
 ```python
 def draw_header_bar(img, text):
@@ -476,11 +480,12 @@ def to_gray(img):
 ```
 
  Estima una máscara binaria del primer plano (persona/objeto)
-      1 - Suaviza el gris para reducir ruido
-      2 - Aplica el sustractor de fondo (MOG2) para obtener el mapa de primer plano.
-      3 - Umbral alto (200) para quedarnos con 0/255 y eliminar semi-tonos (posibles sombras/restos).
-      4 - OPEN para quitar ruido pequeño; CLOSE para cerrar huecos en la silueta.
-    Devuelve 'mask' (uint8 con 0/255).
+
+      1 - Suaviza el gris para reducir ruido  
+      2 - Aplica el sustractor de fondo (MOG2) para obtener el mapa de primer plano.   
+      3 - Umbral alto (200) para quedarnos con 0/255 y eliminar semi-tonos (posibles sombras/restos).  
+      4 - OPEN para quitar ruido pequeño; CLOSE para cerrar huecos en la silueta.  
+    Devuelve 'mask' (uint8 con 0/255).  
 
 ```python
 def detect_person_mask(gray, bg_subtractor, kernel):
@@ -492,11 +497,11 @@ def detect_person_mask(gray, bg_subtractor, kernel):
     return mask
 
 ```
-Busca el contorno de mayor área en la máscara y calcula su centroide.
-    - min_area: área mínima para considerar que el contorno es válido (evita ruido).
-    Devuelve:
-      - cnt: contorno (np.array de puntos) o None si no hay válido.
-      - (cx, cy): centroide (int,int) o None si no se puede calcular.
+Busca el contorno de mayor área en la máscara y calcula su centroide.  
+    - min_area: área mínima para considerar que el contorno es válido (evita ruido).  
+    Devuelve:  
+      - cnt: contorno (np.array de puntos) o None si no hay válido.  
+      - (cx, cy): centroide (int,int) o None si no se puede calcular.  
 
 ```python
 def largest_contour_centroid(mask, min_area=10000):
@@ -515,11 +520,11 @@ def largest_contour_centroid(mask, min_area=10000):
     return cnt, (cx, cy)
 ```
 
-Aplica un efecto de 'cortina digital' horizontal:
-    - Mantiene brillante una franja vertical centrada en 'center_x' de semiancho 'window_half_width'.
-    - Fuera de esa franja, atenúa suavemente (no deja negro del todo: piso del 25%).
-    Devuelve la imagen BGR atenuada según esa máscara suave.
-
+Aplica un efecto de 'cortina digital' horizontal:  
+    - Mantiene brillante una franja vertical centrada en 'center_x' de semiancho 'window_half_width'.  
+    - Fuera de esa franja, atenúa suavemente (no deja negro del todo: piso del 25%).  
+    Devuelve la imagen BGR atenuada según esa máscara suave.  
+    
 ```python
 def apply_digital_curtain(frame, center_x, window_half_width):
     h, w = frame.shape[:2]
