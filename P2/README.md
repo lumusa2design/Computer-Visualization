@@ -339,6 +339,122 @@ if __name__ == "__main__":
 ```
 
 # Tarea 4 TAREA: Tras ver los vídeos My little piece of privacy, Messa di voce y Virtual air guitar proponer un demostrador reinterpretando la parte de procesamiento de la imagen, tomando como punto de partida alguna de dichas instalaciones.
+```python
+import cv2 as cv
+import numpy as np
+
+def draw_header_bar(img, text):
+    out = img.copy()
+    cv.rectangle(out, (0, 0), (out.shape[1], 30), (0, 0, 0), -1)
+    cv.putText(out, text, (10, 22), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1, cv.LINE_AA)
+    return out
+
+def to_gray(img):
+    return cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+def detect_person_mask(gray, bg_subtractor, kernel):
+    blurred = cv.GaussianBlur(gray, (5,5), 0)
+    fg = bg_subtractor.apply(blurred)
+    _, mask = cv.threshold(fg, 200, 255, cv.THRESH_BINARY)
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel, iterations=2)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=2)
+    return mask
+
+def largest_contour_centroid(mask, min_area=10000):
+    contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None, None
+    areas = [cv.contourArea(c) for c in contours]
+    i = int(np.argmax(areas))
+    if areas[i] < min_area:
+        return None, None
+    cnt = contours[i]
+    M = cv.moments(cnt)
+    if M["m00"] == 0:
+        return cnt, None
+    cx = int(M["m10"]/M["m00"]); cy = int(M["m01"]/M["m00"])
+    return cnt, (cx, cy)
+
+def apply_digital_curtain(frame, center_x, window_half_width):
+    h, w = frame.shape[:2]
+    x = np.arange(w, dtype=np.float32)
+    dist = np.abs(x - float(center_x))
+    soft = 1.0 - np.clip((dist - window_half_width) / max(window_half_width, 1), 0.0, 1.0)
+    soft = 0.25 + 0.75 * soft 
+    mask_1d = soft.astype(np.float32)
+    mask_2d = np.tile(mask_1d[None, :], (h, 1))
+    masked = (frame.astype(np.float32) * mask_2d[..., None]).astype(np.uint8)
+    return masked
+
+def main():
+    cap = cv.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return
+
+    bg = cv.createBackgroundSubtractorMOG2(history=220, varThreshold=24, detectShadows=False)
+    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5,5))
+    show_mask = False
+    window_half_width = 120  
+    last_center_x = None
+
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            print("Can't receive frame. Exiting ...")
+            break
+
+        gray = to_gray(frame)
+        mask = detect_person_mask(gray, bg, kernel)
+        cnt, centroid = largest_contour_centroid(mask)
+        h, w = frame.shape[:2]
+        if centroid is not None:
+            last_center_x = centroid[0]
+        if last_center_x is None:
+            last_center_x = w // 2
+
+        curtain_view = apply_digital_curtain(frame, last_center_x, window_half_width)
+
+        if show_mask:
+            mask_bgr = cv.cvtColor(mask, cv.COLOR_GRAY2BGR)
+            debug = frame.copy()
+            if cnt is not None:
+                cv.drawContours(debug, [cnt], -1, (0,255,255), 2)
+                cv.circle(debug, (last_center_x, h//2), 5, (0,0,255), -1, lineType=cv.LINE_AA)
+            side = np.hstack([
+                frame,
+                mask_bgr,
+                debug,
+                curtain_view
+            ])
+            if side.shape[1] > 1280:
+                side = cv.resize(side, (1280, int(1280*side.shape[0]/side.shape[1])))
+            out = draw_header_bar(side, header)
+        else:
+            out = curtain_view.copy()
+            x0 = max(0, int(last_center_x - window_half_width))
+            x1 = min(w-1, int(last_center_x + window_half_width))
+            cv.rectangle(out, (x0, 0), (x1, h-1), (255,255,255), 1, cv.LINE_AA)
+            header = f"Demostrador: Cortina Digital | ESC salir | A/Z +/- ancho | V ver máscara | ancho={2*window_half_width}"
+            out = draw_header_bar(out, header)
+
+        cv.imshow("cortina_digital", out)
+        key = cv.waitKey(20) & 0xFF
+        if key == 27:
+            break
+        elif key in (ord('a'), ord('A')):
+            window_half_width = min(w//2, window_half_width + 10)
+        elif key in (ord('z'), ord('Z')):
+            window_half_width = max(20, window_half_width - 10)
+        elif key in (ord('v'), ord('V')):
+            show_mask = not show_mask
+
+    cap.release()
+    cv.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+´´´
 
  <div align="center">
 
