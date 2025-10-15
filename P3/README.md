@@ -488,7 +488,7 @@ if __name__ == "__main__":
         os.remove(CALIB_JSON)
 ```
 
-```Mermaid
+```mermaid
 flowchart TD
     A[Leer imagen (IMG_PATH)] --> B{¿Hay calibración válida?}
     B -- Sí --> C[load_calibration()]
