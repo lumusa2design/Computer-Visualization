@@ -507,6 +507,47 @@ flowchart TD
 
 ```
 
+### Usos aplicados
+
+#### Caso 1: El caso Básico
+
+![Monedas](./res_Monedas.png)
+
+Como podemos ver en este caso ha acertado el 100% de las veces. Esto se debe a que es la imgen ideal, sin ruido de fondo y a una muy buena resolución.
+
+#### Caso 2: Poco espacio entre monedas y con brillos difusos
+
+![caso2](./res_monedasfeas.png)
+
+En este caso, la moneda de 50 centimos puede confundirse con la de 1€ porque ambas disponen de un doble anillo, rompiendo nuestro algoritmo para evitar los dobles tonos, además de que la iluminación y el fondo no es ideal, provocando más errores, y una leve inclinación que genera perspectiva.
+
+Igualmente, la mayoría de monedas ha sido capaz de diferenciarlas bien.
+
+#### Caso 3: Sombras que deforman la imagen
+
+![caso3](./res_monedasfeas2.png)
+
+En este caso la sombra deforma bastante el radio de la imagen haciendo que las monedas parezcan más grandes de lo que son, esto provoca que algunas monedas ni si quierase reconozcan como un círculo y además el brillo genera cierto brillo en su reflexión, dificultando el proceso de clasificación.
+
+La moneda de 2 euros en este caso, no esta uniformemente iluminada respecto al resto de monedas y por eso se genera el error.
+
+#### Caso 4: Monedas con dimesniones desproporcionadas
+
+![caso4](./res_monedasfeas3.png)
+
+En este caso, las monedas no tienen una proporción real, siendo la moneda de 5 céntimos de un tamaño bastante mayor a la de 10 centimos y a su vez, el brillo genera ruido y hace que monedas más pequeñas parezcan grandes.
+
+#### Caso 5: Monedas super solapadasy en baja calidad
+
+![caso 5](./res_monedasfeas4.png)
+
+En este caso las monedas no se logran diferenciar porque la imagen tiene muy baja calidad detectando pocos círculos, además de no siendo capaz de clasificar bien la imagen por el brillo puesto sobre la imagen.
+
+#### Caso 6: Monedas superpuestas
+
+![caso6](./res_monedasfeas5.png)
+
+En este caso si ha sido capaz de diferenciar relativamente bien entre las monedas incluso superponiendose una encima de otra, aunque, hay una que ha detectado por nuestro método para comprobar la circularidad (en la selección de moneda si lo detecto).
  <div align="center">
 
 [![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
@@ -522,10 +563,8 @@ flowchart TD
 --- 
 ## Trabajo realizado
 
-- **Tarea 1**: `Guillermo`
-- **Tarea 2**: `Guillermo (Sobel) y Luis (Gráfica)` 
-- **Tarea 3**: `Luis` 
-- **Tarea 4**: `Guillermo y Luis` 
+- **Tarea 1**: `Guillermo y Luis`
+- **Tarea 2**: `Guillermo` 
 - **README**: `Guillermo y Luis`  
 
 --- 
