@@ -490,19 +490,20 @@ if __name__ == "__main__":
 
 ```mermaid
 flowchart TD
-    A[Leer imagen (IMG_PATH)] --> B{¿Hay calibración válida?}
-    B -- Sí --> C[load_calibration()]
-    B -- No --> D[detect_circles(use_tight=false)]
-    D --> E[Usuario hace clic en moneda de referencia]
-    E --> F[calcular escala px/mm y guardar JSON]
-    C --> G[preprocess_image_for_hough()]
+    A["Leer imagen (IMG_PATH)"] --> B{"Hay calibracion valida?"}
+    B -- "Si" --> C["load_calibration()"]
+    B -- "No" --> D["detect_circles(use_tight=false)"]
+    D --> E["Usuario hace clic en moneda de referencia"]
+    E --> F["Calcular escala px/mm y guardar JSON"]
+    C --> G["preprocess_image_for_hough()"]
     F --> G
-    G --> H[detect_circles(use_tight=true)]
-    H --> I[deduplicate_circles()]
-    I --> J[compute_adaptive_twotone_threshold()]
-    I --> K[Clasificar cada círculo: tamaño → {1€,20c} color/circularidad]
-    K --> L[draw_coin_labels()]
-    L --> M[Mostrar imagen + conteo por tipo]
+    G --> H["detect_circles(use_tight=true)"]
+    H --> I["deduplicate_circles()"]
+    I --> J["compute_adaptive_twotone_threshold()"]
+    I --> K["Clasificar cada circulo: tamano -> {1e,20c} color/circularidad"]
+    K --> L["draw_coin_labels()"]
+    L --> M["Mostrar imagen + conteo por tipo"]
+
 
 ```
 
