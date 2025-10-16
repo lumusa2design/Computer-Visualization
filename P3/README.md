@@ -602,7 +602,7 @@ def clean_mask(mask, open_ksize=3, close_ksize=3, it_open=1, it_close=2):
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k2, iterations=it_close) # cierra agujeros
     return mask
 ````
-Limpia la máscara binaria: apertura quita puntos sueltos; cierre rellena huecos.
+Limpia la máscara binaria: open quita puntos sueltos y close rellena huecos.
 
 ````python
 def best_binary_mask(gray):
@@ -664,30 +664,25 @@ def contour_features(cnt, roi_bgr, mask):
 
     return {...}  # devuelve todas las métricas anteriores en un dict
 ````
-cnt: el contorno de la partícula (array de puntos Nx1x2 de OpenCV).
-
-roi_bgr: la subimagen a color (BGR) que contiene la partícula.
-
-mask: máscara binaria (mismo tamaño que la ROI) con 1/255 en los píxeles del objeto y 0 en el fondo. Se usa para medir solo “dentro” de la partícula.
-
-area: tamaño del objeto (en px²).
-
-perimeter (per): longitud del contorno (px).
-
-circularity (circ): ≈1 para un círculo perfecto o <1 cuanto más irregular/elongado (pellets suelen estar altos; fragmentos, bajos).
-aspect (relación de aspecto) = ancho/alto del rectángulo envolvente: muy cercano ≈1 en objetos redondos (pellets), mucho >1 o <1 cuando es alargado.
-
-extent = área ocupada / área del bbox: Cercano a 1 si el objeto llena su caja (regular/compacto), más bajo si es muy irregular o hay huecos.
-
-solidity = área / área del casco convexo: 1 si es convexo y sin muescas, menor que 1 cuanto más dentado o con concavidades (típico de fragmentos irregulares).
-
-ellipse_ratio = eje mayor / eje menor de la elipse ajustada: muy cercano ≈1 si es circular o >1 si está aplastado o alargado (fragmentos).
-
-Se necesita len(cnt) ≥ 5 para poder ajustar una elipse.
-
+Vamos a explicar bien las características que extraemos:
+cnt: el contorno de la partícula (array de puntos Nx1x2 de OpenCV)
+roi_bgr: la subimagen a color (BGR) que contiene la partícula
+mask: máscara binaria (mismo tamaño que la ROI) con 1/255 en los píxeles del objeto y 0 en el fondo. Se usa para medir solo “dentro” de la partícula
+area: tamaño del objeto (en px²)
+perimeter (per): longitud del contorno (px)
+circularity (circ): ≈1 para un círculo perfecto o <1 cuanto más irregular/elongado (pellets suelen estar altos; fragmentos, bajos)
+aspect (relación de aspecto) = ancho/alto del rectángulo envolvente: muy cercano ≈1 en objetos redondos (pellets), mucho >1 o <1 cuando es alargado
+extent = área ocupada / área del bbox: Cercano a 1 si el objeto llena su caja (regular/compacto), más bajo si es muy irregular o hay huecos
+solidity = área / área del casco convexo: 1 si es convexo y sin muescas, menor que 1 cuanto más dentado o con concavidades (típico de fragmentos irregulares)
+ellipse_ratio = eje mayor / eje menor de la elipse ajustada: muy cercano ≈1 si es circular o >1 si está aplastado o alargado (fragmentos), se necesita len(cnt) ≥ 5 para poder ajustar una elipse
 rad_ratio (radio mínimo / radio máximo desde el centroide al contorno): muy cercano ≈1 en objetos equidistantes al centro (redondos), pequeño en objetos alargados o con pinchos.
+v_mean: brillo medio del objeto.
+p10_v: percentil 10 de V → se fija en la cola oscura (suele ser más estable para detectar TAR que la media).
+dark_frac: proporción de píxeles muy oscuros
+s_mean: saturación media (plásticos coloreados tienden a saturaciones mayores; puede ayudar a distinguir pellets coloreados de fragmentos blanquecinos).
 
 Resumen geométrico: los pellets tienden a circularity alta, solidity alta, aspect≈1, ellipse_ratio≈1, rad_ratio alto; fragmentos suelen bajar en varias de estas; el alquitrán puede ser compacto pero a veces muy irregular.
+La función retorna un diccionario con todas las métricas.
 
 
 ## 5. Extraer partículas de las imágenes de clase
