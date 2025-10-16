@@ -548,6 +548,312 @@ En este caso las monedas no se logran diferenciar porque la imagen tiene muy baj
 ![caso6](./res_monedasfeas5.png)
 
 En este caso si ha sido capaz de diferenciar relativamente bien entre las monedas incluso superponiendose una encima de otra, aunque, hay una que ha detectado por nuestro método para comprobar la circularidad (en la selección de moneda si lo detecto).
+
+# TAREA2
+
+TAREA: La tarea consiste en extraer características (geométricas y/o visuales) de las tres imágenes completas de partida, y *aprender* patrones que permitan identificar las partículas en nuevas imágenes. Para ello se proporciona como imagen de test *MPs_test.jpg* y sus correpondientes anotaciones *MPs_test_bbs.csv* con la que deben obtener las métricas para su propuesta de clasificación de microplásticos, además de la matriz de confusión. La matriz de confusión permitirá mostrar para cada clase el número de muestras que se clasifican correctamente de dicha clase, y el número de muestras que se clasifican incorrectamente como perteneciente a una de las otras dos clases.
+
+En el trabajo [SMACC: A System for Microplastics Automatic Counting and Classification](https://doi.org/10.1109/ACCESS.2020.2970498), las características geométricas utilizadas fueron:
+
+- Área en píxeles
+- Perímetro en píxeles
+- Compacidad (relación entre el cuadrado del perímetro y el área de la partícula)
+- Relación del área de la partícula con la del contenedor
+- Relación del ancho y el alto del contenedor
+- Relación entre los ejes de la elipse ajustada
+- Definido el centroide, relación entre las distancias menor y mayor al contorno
+
+Si no se quedan satisfechos con la segmentación obtenida, es el mundo real, también en el README comento técnicas recientes de segmentación, que podrían despertar su curiosidad.
+
+#   Clasificador heurístico de microplásticos (FRA, PEL, TAR)
+Este script clasifica partículas en FRA (fragmentos), PEL (pellets) y TAR (alquitrán) usando solo heurísticas (reglas) basadas en características geométricas y de apariencia.
+Se “entrena” aprendiendo umbrales a partir de las tres imágenes de clase (FRA.png, PEL.png, TAR.png), y evalúa en la imagen MPs_test.jpg con sus anotaciones MPs_test_bbs.csv.
+
+# 1. Importaciones
+Importamos las correspondientes librerías para trabajar en el ejercicio 
+````python
+import  math
+import numpy as np, pandas as pd
+import cv2, matplotlib.pyplot as plt, seaborn as sns
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_recall_fscore_support
+````
+Numpy y pandas para manejo numérico y de tablas, cv2 (OpenCV) para procesado de imagen, matplotlib y seaborn para los gráficos y la matriz de confusión y sklearn.metrics para métricas de clasificación (precisión, recall, f1score). 
+
+# 2. Parámetros a ajustar
+````python
+MARGIN_TAR   = 0.10   # sesgo a favor de TAR al aprender umbrales
+MARGIN_PEL   = 0.05   # sesgo a favor de PEL al aprender umbrales
+V_DARK_THR   = 65     # umbral de “pixel muy oscuro” en el canal V (HSV)
+ASPECT_DELTA = 0.35   # tolerancia del aspect ratio (≈1±delta) para pellets
+````
+MARGIN_TAR / MARGIN_PEL: se suman/restan a los umbrales aprendidos para separar más las clases. Si subes MARGIN_TAR, el clasificador será más propenso a etiquetar TAR.
+
+V_DARK_THR: un píxel se considera “muy oscuro” si V < V_DARK_THR.
+
+ASPECT_DELTA: cuánto puede alejarse el ancho/alto de 1 y seguir considerarse redondo (para pellets).
+
+
+# 3. Segmentación
+````python
+def clean_mask(mask, open_ksize=3, close_ksize=3, it_open=1, it_close=2):
+    k1 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (open_ksize, open_ksize))
+    k2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (close_ksize, close_ksize))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  k1, iterations=it_open)  # elimina ruido fino
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k2, iterations=it_close) # cierra agujeros
+    return mask
+````
+Limpia la máscara binaria: apertura quita puntos sueltos; cierre rellena huecos.
+
+````python
+def best_binary_mask(gray):
+    blur = cv2.GaussianBlur(gray, (5,5), 0)  # suaviza ruido
+    _, th_bin = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, th_inv = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    th_bin, th_inv = clean_mask(th_bin), clean_mask(th_inv)
+
+    def largest_area(m):
+        cnts,_ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return 0 if not cnts else cv2.contourArea(max(cnts, key=cv2.contourArea))
+    H,W = gray.shape
+    a1, a2 = largest_area(th_bin), largest_area(th_inv)
+    return th_bin if (a1 >= a2 and a1 < 0.95*H*W) else th_inv
+````
+Calcula dos umbralizados Otsu: normal e invertido (porque a veces el objeto es más claro que el fondo y viceversa).
+
+Elige el que produce el blob mayor pero evita casos absurdos (no aceptar si ocupa ~toda la ROI: < 0.95 * área).
+
+# 4. Extracción de características (features)
+````python
+def contour_features(cnt, roi_bgr, mask):
+    gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
+
+    area = cv2.contourArea(cnt)
+    per  = cv2.arcLength(cnt, True)
+    circ = (4*math.pi*area)/(per**2) if per>0 else 0.0  # circularidad: 1=círculo perfecto
+
+    x,y,w,h = cv2.boundingRect(cnt)
+    aspect  = w/h if h>0 else 0.0                       # relación ancho/alto
+    extent  = area/(w*h) if (w*h)>0 else 0.0            # % del bbox ocupado
+    hull    = cv2.convexHull(cnt)
+    harea   = cv2.contourArea(hull)
+    solidity= (area/harea) if harea>0 else 0.0          # compactación (1 = convexo perfecto)
+
+    ellipse_ratio = 1.0
+    if len(cnt)>=5:
+        (_,_),(MA,ma),_ = cv2.fitEllipse(cnt)           # elipse ajustada
+        if ma>0:
+            r = MA/ma
+            ellipse_ratio = r if r>=1 else 1.0/r        # mayor_eje / menor_eje
+
+    # Radios desde el centroide: min/max → cuanto más cerca de 1, más redondo
+    M = cv2.moments(cnt)
+    cx = (M['m10']/M['m00']) if M['m00']!=0 else (x+w/2)
+    cy = (M['m01']/M['m00']) if M['m00']!=0 else (y+h/2)
+    pts = cnt.reshape(-1,2)
+    d   = np.sqrt((pts[:,0]-cx)**2 + (pts[:,1]-cy)**2)
+    rad_ratio = (d.min()/d.max()) if d.max()>0 else 0.0
+
+    # Rasgos de apariencia en HSV: brillo (V) y saturación (S)
+    hsv    = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2HSV)
+    v      = hsv[:,:,2]
+    v_mask = v[mask>0]                                  # solo píxeles del objeto
+    v_mean = float(v_mask.mean()) if v_mask.size else 0.0
+    p10_v  = float(np.percentile(v_mask, 10)) if v_mask.size else 0.0  # percentil 10 (oscuridad)
+    dark_frac = float((v_mask < V_DARK_THR).mean()) if v_mask.size else 0.0
+    s_mean = float(hsv[:,:,1][mask>0].mean()) if v_mask.size else 0.0
+
+    return {...}  # devuelve todas las métricas anteriores en un dict
+````
+
+
+# 5. Extraer partículas de las imágenes de clase
+´´´´python
+def extract_from_class_image(path, label, min_area=30, max_frac=0.3):
+    bgr  = cv2.imread(path); assert bgr is not None
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    mask = best_binary_mask(gray)
+    cnts,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    H,W = gray.shape; max_area = max_frac*H*W
+    rows=[]
+    for c in cnts:
+        a = cv2.contourArea(c)
+        if a<min_area or a>max_area: continue           # filtra ruido/objetos enormes
+        m = np.zeros_like(mask); cv2.drawContours(m,[c],-1,255,-1)
+        f = contour_features(c, bgr, m); f["label"]=label
+        rows.append(f)
+    return pd.DataFrame(rows)
+´´´´
+  Segmenta todos los objetos de la imagen de clase (FRA/PEL/TAR), y los filtra por área razonable, extrae sus características y les añade una etiqueta "label".
+  
+  Devuelve un DataFrame de muestras por clase.
+
+# 6. “Aprender” umbrales (a partir de medianas)
+````python
+def iqr(v): return np.percentile(v,75)-np.percentile(v,25)
+
+def learn_thresholds(df):
+    med = df.groupby("label")[FEATS].median()  # mediana por clase
+
+    # --- TAR (oscuridad) ---
+    tar_p10   = med.loc["TAR","p10_v"]
+    oth_p10   = med.drop(index="TAR")["p10_v"].median()
+    thr_tar_v = (tar_p10 + oth_p10)/2.0 + MARGIN_TAR*iqr(df["p10_v"])
+    # ↑ umbral para “p10_v < thr_tar_v” → si subes MARGIN_TAR, será más fácil clasificar como TAR
+
+    tar_df, oth_df = med.loc["TAR","dark_frac"], med.drop(index="TAR")["dark_frac"].median()
+    thr_dark_frac  = (tar_df + oth_df)/2.0 - MARGIN_TAR*iqr(df["dark_frac"])
+    # ↑ umbral para “dark_frac > thr_dark_frac”; restar margen lo hace más permisivo con TAR
+
+    # --- PEL (forma) ---
+    thr_circ = (med.loc["PEL","circularity"] + med.loc["FRA","circularity"])/2.0 - MARGIN_PEL*iqr(df["circularity"])
+    thr_sol  = (med.loc["PEL","solidity"]    + med.loc["FRA","solidity"])   /2.0 - MARGIN_PEL*iqr(df["solidity"])
+    thr_rad  = (med.loc["PEL","rad_ratio"]   + med.loc["FRA","rad_ratio"])  /2.0 - MARGIN_PEL*iqr(df["rad_ratio"])
+
+    return dict(thr_tar_v=thr_tar_v, thr_dark_frac=thr_dark_frac,
+                thr_circ=thr_circ, thr_sol=thr_sol, thr_rad=thr_rad, med=med)
+
+````
+Calcula medianas por clase y coloca el umbral a mitad de camino entre clases, con un margen (IQR):
+
+TAR: usa p10_v (cuanto más bajo, más oscuro) y dark_frac (cuanto más alto, más oscuro).
+
+PEL: usa circularidad, solidity y rad_ratio (propias de objetos redondeados y compactos).
+
+MARGIN_TAR y MARGIN_PEL “empujan” los umbrales para favorecer la detección de esa clase.
+
+# 7. Reglas de decisión
+````python
+def is_pellet_like(f, thr):
+    near_square = (1.0-ASPECT_DELTA) <= f["aspect"] <= (1.0+ASPECT_DELTA)
+    roundish    = (f["ellipse_ratio"] <= 1.5)
+    return (f["circularity"] >= thr["thr_circ"] and
+            f["solidity"]    >= thr["thr_sol"]  and
+            f["rad_ratio"]   >= thr["thr_rad"]  and
+            near_square and roundish)
+````
+Pellet si: redondo/compacto (circularity, solidity, rad_ratio altos), aspecto ≈ 1 y poca excentricidad (ellipse_ratio bajo).
+
+````python
+def predict_heuristic(f, thr):
+    # 1) TAR si es lo bastante oscuro
+    if (f["p10_v"] < thr["thr_tar_v"]) or (f["dark_frac"] > thr["thr_dark_frac"]):
+        return "TAR"
+    # 2) Si no, PEL por forma
+    if is_pellet_like(f, thr):
+        return "PEL"
+    # 3) Resto: FRA
+    return "FRA"
+````
+Orden de prioridad: TAR (oscuridad) → PEL (forma) → FRA (lo demás).
+
+# 8. Cargar anotaciones y evaluar en la imagen de test
+````python
+def load_annotations(path_csv):
+    try:
+        df = pd.read_csv(path_csv, sep="\t")
+        if {'label','x_min','y_min','x_max','y_max'}.difference(df.columns):
+            raise Exception("sep")
+    except Exception:
+        df = pd.read_csv(path_csv)
+    return df
+````
+Lee el CSV de bboxes (admite tabulador o coma como separador).
+````python
+def evaluate_on_test(path_img, path_csv, thresholds):
+    img = cv2.imread(path_img); assert img is not None
+    H,W,_ = img.shape
+    df = load_annotations(path_csv)
+
+    y_true, y_pred = [], []
+    vis = img.copy()
+
+    for _,r in df.iterrows():
+        gt = str(r["label"])
+        x0,y0,x1,y1 = map(int, [r["x_min"], r["y_min"], r["x_max"], r["y_max"]])
+        # recorta ROI con la bbox
+        x0=max(0,x0); y0=max(0,y0); x1=min(W-1,x1); y1=min(H-1,y1)
+        roi = img[y0:y1, x0:x1]
+        if roi.size==0: continue
+
+        # segmenta dentro de la ROI y toma el mayor contorno (la partícula)
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        mask = best_binary_mask(gray)
+        cnts,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not cnts: continue
+        cnt = max(cnts, key=cv2.contourArea)
+
+        # máscara del contorno y extracción de features
+        m = np.zeros_like(mask); cv2.drawContours(m,[cnt],-1,255,-1)
+        f = contour_features(cnt, roi, m)
+
+        # predicción con las reglas
+        pred = predict_heuristic(f, thresholds)
+        y_true.append(gt); y_pred.append(pred)
+
+        # pinta la predicción en la imagen para depurar visualmente
+        color = dict(FRA=(0,0,255), PEL=(0,255,0), TAR=(255,0,0)).get(pred,(0,0,0))
+        cv2.rectangle(vis,(x0,y0),(x1,y1),color,2)
+        cv2.putText(vis, pred, (x0,y0-4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+
+    return np.array(y_true), np.array(y_pred), vis
+````
+Para cada bbox: recorta ROI → segmenta → saca features → clasifica → guarda y_true/y_pred y dibuja el resultado.
+
+# 9. Matriz de confusión y métricas
+````python
+def show_confusion(y, yhat, labels=("FRA","PEL","TAR")):
+    cm  = confusion_matrix(y, yhat, labels=list(labels))
+    acc = accuracy_score(y, yhat)
+    pr, rc, f1, sup = precision_recall_fscore_support(y, yhat, labels=list(labels), zero_division=0)
+
+    print(f"\nMuestras: {len(y)}  |  Accuracy: {acc:.3f}")
+    for i,l in enumerate(labels):
+        print(f"{l}: precision={pr[i]:.3f}  recall={rc[i]:.3f}  f1={f1[i]:.3f}  soporte={sup[i]}")
+
+    plt.figure(figsize=(5,5))
+    sns.heatmap(cm, annot=True, fmt='d', cbar=False, cmap='Greys',
+                xticklabels=labels, yticklabels=labels)
+    plt.xlabel("Predicción"); plt.ylabel("Real"); plt.title("Matriz de confusión")
+    plt.tight_layout(); plt.show()
+    return cm
+````
+Calcula accuracy, precision/recall/F1 por clase y dibuja la matriz de confusión.
+
+# Bloque principal 
+````python
+PATH_FRA = "FRA.png"
+PATH_PEL = "PEL.png"
+PATH_TAR = "TAR.png"
+PATH_TEST_IMG = "MPs_test.jpg"
+PATH_TEST_CSV = "MPs_test_bbs.csv"
+
+# 1) “Entrenamiento” (solo para aprender umbrales con medianas)
+df_train = pd.concat([
+    extract_from_class_image(PATH_FRA, "FRA", min_area=30),
+    extract_from_class_image(PATH_PEL, "PEL", min_area=30),
+    extract_from_class_image(PATH_TAR, "TAR", min_area=30),
+], ignore_index=True)
+
+assert not df_train.empty, "No se extrajeron partículas; revisa rutas/archivos."
+thr = learn_thresholds(df_train)
+print("Umbrales aprendidos:", {k:round(v,3) for k,v in thr.items() if k!='med'})
+
+# 2) Evaluación en la imagen de test anotada
+y, yhat, vis = evaluate_on_test(PATH_TEST_IMG, PATH_TEST_CSV, thr)
+_ = show_confusion(y, yhat, labels=("FRA","PEL","TAR"))
+
+# 3) Visualización de predicciones en la imagen completa
+plt.figure(figsize=(8,10))
+plt.imshow(cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)); plt.axis('off')
+plt.title("Predicciones heurísticas sobre la imagen de test")
+plt.show()
+````
+No usa la imagen de test para aprender nada (solo evalúa).
+
+Aprende umbrales con las imágenes de clase (FRA/PEL/TAR).
+
+Evalúa en MPs_test con sus bboxes.
+
  <div align="center">
 
 [![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
@@ -564,7 +870,7 @@ En este caso si ha sido capaz de diferenciar relativamente bien entre las moneda
 ## Trabajo realizado
 
 - **Tarea 1**: `Guillermo y Luis`
-- **Tarea 2**: `Guillermo` 
+- **Tarea 2**: `Guillermo y Luis` 
 - **README**: `Guillermo y Luis`  
 
 --- 
