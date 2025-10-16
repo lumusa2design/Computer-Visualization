@@ -664,10 +664,34 @@ def contour_features(cnt, roi_bgr, mask):
 
     return {...}  # devuelve todas las métricas anteriores en un dict
 ````
+cnt: el contorno de la partícula (array de puntos Nx1x2 de OpenCV).
+
+roi_bgr: la subimagen a color (BGR) que contiene la partícula.
+
+mask: máscara binaria (mismo tamaño que la ROI) con 1/255 en los píxeles del objeto y 0 en el fondo. Se usa para medir solo “dentro” de la partícula.
+
+area: tamaño del objeto (en px²).
+
+perimeter (per): longitud del contorno (px).
+
+circularity (circ): ≈1 para un círculo perfecto o <1 cuanto más irregular/elongado (pellets suelen estar altos; fragmentos, bajos).
+aspect (relación de aspecto) = ancho/alto del rectángulo envolvente: muy cercano ≈1 en objetos redondos (pellets), mucho >1 o <1 cuando es alargado.
+
+extent = área ocupada / área del bbox: Cercano a 1 si el objeto llena su caja (regular/compacto), más bajo si es muy irregular o hay huecos.
+
+solidity = área / área del casco convexo: 1 si es convexo y sin muescas, menor que 1 cuanto más dentado o con concavidades (típico de fragmentos irregulares).
+
+ellipse_ratio = eje mayor / eje menor de la elipse ajustada: muy cercano ≈1 si es circular o >1 si está aplastado o alargado (fragmentos).
+
+Se necesita len(cnt) ≥ 5 para poder ajustar una elipse.
+
+rad_ratio (radio mínimo / radio máximo desde el centroide al contorno): muy cercano ≈1 en objetos equidistantes al centro (redondos), pequeño en objetos alargados o con pinchos.
+
+Resumen geométrico: los pellets tienden a circularity alta, solidity alta, aspect≈1, ellipse_ratio≈1, rad_ratio alto; fragmentos suelen bajar en varias de estas; el alquitrán puede ser compacto pero a veces muy irregular.
 
 
 ## 5. Extraer partículas de las imágenes de clase
-´´´´python
+````python
 def extract_from_class_image(path, label, min_area=30, max_frac=0.3):
     bgr  = cv2.imread(path); assert bgr is not None
     gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
@@ -682,7 +706,7 @@ def extract_from_class_image(path, label, min_area=30, max_frac=0.3):
         f = contour_features(c, bgr, m); f["label"]=label
         rows.append(f)
     return pd.DataFrame(rows)
-´´´´
+````
   Segmenta todos los objetos de la imagen de clase (FRA/PEL/TAR), y los filtra por área razonable, extrae sus características y les añade una etiqueta "label".
   
   Devuelve un DataFrame de muestras por clase.
@@ -854,7 +878,7 @@ Aprende umbrales con las imágenes de clase (FRA/PEL/TAR).
 Evalúa en MPs_test con sus bboxes.
 
 # Resultados
-El resultado obtenido con estos valores iniciales no ha sido bastante satisfactorio.
+Tras muchas y muchas pruebas con distintos parámetros, uno de los mejores resultados alcanzados fue con estos parámetros iniciales.
 ````pyhton
 MARGIN_TAR   = 0.45   
 MARGIN_PEL   = 0.30  
@@ -864,7 +888,7 @@ ASPECT_DELTA = 0.95
 ![alt text](image.png)
 ![alt text](image-1.png)
 
-Obviamente no es el clasificador perfecto, pero ante la complejidad del problema planteado un accuracy de más del 70% no está nada mal.
+Obviamente, no es el clasificador perfecto ni mucho menos, pero ante la complejidad del problema planteado conseguir un accuracy de más del 70% no está nada mal.
 
  <div align="center">
 
