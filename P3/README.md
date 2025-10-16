@@ -565,11 +565,11 @@ En el trabajo [SMACC: A System for Microplastics Automatic Counting and Classifi
 
 Si no se quedan satisfechos con la segmentación obtenida, es el mundo real, también en el README comento técnicas recientes de segmentación, que podrían despertar su curiosidad.
 
-#   Clasificador heurístico de microplásticos (FRA, PEL, TAR)
-Este script clasifica partículas en FRA (fragmentos), PEL (pellets) y TAR (alquitrán) usando solo heurísticas (reglas) basadas en características geométricas y de apariencia.
+#  Clasificador heurístico de microplásticos (FRA, PEL, TAR)
+En este ejercicio clasificamos partículas en FRA (fragmentos), PEL (pellets) y TAR (alquitrán) usando solo heurísticas (reglas) basadas en características geométricas y de apariencia.
 Se “entrena” aprendiendo umbrales a partir de las tres imágenes de clase (FRA.png, PEL.png, TAR.png), y evalúa en la imagen MPs_test.jpg con sus anotaciones MPs_test_bbs.csv.
 
-# 1. Importaciones
+## 1. Importaciones
 Importamos las correspondientes librerías para trabajar en el ejercicio 
 ````python
 import  math
@@ -579,10 +579,10 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_recall_f
 ````
 Numpy y pandas para manejo numérico y de tablas, cv2 (OpenCV) para procesado de imagen, matplotlib y seaborn para los gráficos y la matriz de confusión y sklearn.metrics para métricas de clasificación (precisión, recall, f1score). 
 
-# 2. Parámetros a ajustar
+## 2. Parámetros a ajustar
 ````python
-MARGIN_TAR   = 0.10   # sesgo a favor de TAR al aprender umbrales
-MARGIN_PEL   = 0.05   # sesgo a favor de PEL al aprender umbrales
+MARGIN_TAR   = 0.45   # sesgo a favor de TAR al aprender umbrales
+MARGIN_PEL   = 0.30   # sesgo a favor de PEL al aprender umbrales
 V_DARK_THR   = 65     # umbral de “pixel muy oscuro” en el canal V (HSV)
 ASPECT_DELTA = 0.35   # tolerancia del aspect ratio (≈1±delta) para pellets
 ````
@@ -593,7 +593,7 @@ V_DARK_THR: un píxel se considera “muy oscuro” si V < V_DARK_THR.
 ASPECT_DELTA: cuánto puede alejarse el ancho/alto de 1 y seguir considerarse redondo (para pellets).
 
 
-# 3. Segmentación
+## 3. Segmentación
 ````python
 def clean_mask(mask, open_ksize=3, close_ksize=3, it_open=1, it_close=2):
     k1 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (open_ksize, open_ksize))
@@ -622,7 +622,7 @@ Calcula dos umbralizados Otsu: normal e invertido (porque a veces el objeto es m
 
 Elige el que produce el blob mayor pero evita casos absurdos (no aceptar si ocupa ~toda la ROI: < 0.95 * área).
 
-# 4. Extracción de características (features)
+## 4. Extracción de características (features)
 ````python
 def contour_features(cnt, roi_bgr, mask):
     gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
@@ -666,7 +666,7 @@ def contour_features(cnt, roi_bgr, mask):
 ````
 
 
-# 5. Extraer partículas de las imágenes de clase
+## 5. Extraer partículas de las imágenes de clase
 ´´´´python
 def extract_from_class_image(path, label, min_area=30, max_frac=0.3):
     bgr  = cv2.imread(path); assert bgr is not None
@@ -687,7 +687,7 @@ def extract_from_class_image(path, label, min_area=30, max_frac=0.3):
   
   Devuelve un DataFrame de muestras por clase.
 
-# 6. “Aprender” umbrales (a partir de medianas)
+## 6. “Aprender” umbrales (a partir de medianas)
 ````python
 def iqr(v): return np.percentile(v,75)-np.percentile(v,25)
 
@@ -721,7 +721,7 @@ PEL: usa circularidad, solidity y rad_ratio (propias de objetos redondeados y co
 
 MARGIN_TAR y MARGIN_PEL “empujan” los umbrales para favorecer la detección de esa clase.
 
-# 7. Reglas de decisión
+## 7. Reglas de decisión
 ````python
 def is_pellet_like(f, thr):
     near_square = (1.0-ASPECT_DELTA) <= f["aspect"] <= (1.0+ASPECT_DELTA)
@@ -746,7 +746,7 @@ def predict_heuristic(f, thr):
 ````
 Orden de prioridad: TAR (oscuridad) → PEL (forma) → FRA (lo demás).
 
-# 8. Cargar anotaciones y evaluar en la imagen de test
+## 8. Cargar anotaciones y evaluar en la imagen de test
 ````python
 def load_annotations(path_csv):
     try:
@@ -799,7 +799,7 @@ def evaluate_on_test(path_img, path_csv, thresholds):
 ````
 Para cada bbox: recorta ROI → segmenta → saca features → clasifica → guarda y_true/y_pred y dibuja el resultado.
 
-# 9. Matriz de confusión y métricas
+## 9. Matriz de confusión y métricas
 ````python
 def show_confusion(y, yhat, labels=("FRA","PEL","TAR")):
     cm  = confusion_matrix(y, yhat, labels=list(labels))
@@ -817,9 +817,9 @@ def show_confusion(y, yhat, labels=("FRA","PEL","TAR")):
     plt.tight_layout(); plt.show()
     return cm
 ````
-Calcula accuracy, precision/recall/F1 por clase y dibuja la matriz de confusión.
+Calcula el accuracy total, además de la precision/recall/F1score por clase y dibuja la matriz de confusión.
 
-# Bloque principal 
+## 10. Bloque principal para ejecutar
 ````python
 PATH_FRA = "FRA.png"
 PATH_PEL = "PEL.png"
@@ -836,7 +836,6 @@ df_train = pd.concat([
 
 assert not df_train.empty, "No se extrajeron partículas; revisa rutas/archivos."
 thr = learn_thresholds(df_train)
-print("Umbrales aprendidos:", {k:round(v,3) for k,v in thr.items() if k!='med'})
 
 # 2) Evaluación en la imagen de test anotada
 y, yhat, vis = evaluate_on_test(PATH_TEST_IMG, PATH_TEST_CSV, thr)
@@ -853,6 +852,19 @@ No usa la imagen de test para aprender nada (solo evalúa).
 Aprende umbrales con las imágenes de clase (FRA/PEL/TAR).
 
 Evalúa en MPs_test con sus bboxes.
+
+# Resultados
+El resultado obtenido con estos valores iniciales no ha sido bastante satisfactorio.
+````pyhton
+MARGIN_TAR   = 0.45   
+MARGIN_PEL   = 0.30  
+V_DARK_THR   = 65    
+ASPECT_DELTA = 0.95 
+````
+![alt text](image.png)
+![alt text](image-1.png)
+
+Obviamente no es el clasificador perfecto, pero ante la complejidad del problema planteado un accuracy de más del 70% no está nada mal.
 
  <div align="center">
 
