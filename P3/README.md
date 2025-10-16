@@ -586,11 +586,11 @@ MARGIN_PEL   = 0.30   # sesgo a favor de PEL al aprender umbrales
 V_DARK_THR   = 65     # umbral de “pixel muy oscuro” en el canal V (HSV)
 ASPECT_DELTA = 0.35   # tolerancia del aspect ratio (≈1±delta) para pellets
 ````
-MARGIN_TAR / MARGIN_PEL: se suman/restan a los umbrales aprendidos para separar más las clases. Si subes MARGIN_TAR, el clasificador será más propenso a etiquetar TAR.
+`MARGIN_TAR / MARGIN_PEL`: se suman/restan a los umbrales aprendidos para separar más las clases. Si subes MARGIN_TAR, el clasificador será más propenso a etiquetar TAR.
 
-V_DARK_THR: un píxel se considera “muy oscuro” si V < V_DARK_THR.
+`V_DARK_THR`: un píxel se considera “muy oscuro” si V < V_DARK_THR.
 
-ASPECT_DELTA: cuánto puede alejarse el ancho/alto de 1 y seguir considerarse redondo (para pellets).
+`ASPECT_DELTA`: cuánto puede alejarse el ancho/alto de 1 y seguir considerarse redondo (para pellets).
 
 
 ## 3. Segmentación
@@ -666,35 +666,35 @@ def contour_features(cnt, roi_bgr, mask):
 ````
 Vamos a explicar bien las características que extraemos:
 
-cnt: el contorno de la partícula (array de puntos Nx1x2 de OpenCV)
+`cnt`: el contorno de la partícula (array de puntos Nx1x2 de OpenCV)
 
-roi_bgr: la subimagen a color (BGR) que contiene la partícula
+`roi_bgr`: la subimagen a color (BGR) que contiene la partícula
 
-mask: máscara binaria (mismo tamaño que la ROI) con 1/255 en los píxeles del objeto y 0 en el fondo. Se usa para medir solo “dentro” de la partícula
+`mask`: máscara binaria (mismo tamaño que la ROI) con 1/255 en los píxeles del objeto y 0 en el fondo. Se usa para medir solo “dentro” de la partícula
 
-area: tamaño del objeto (en px²)
+`area`: tamaño del objeto (en px²)
 
-perimeter (per): longitud del contorno (px)
+`perimeter (per)`: longitud del contorno (px)
 
-circularity (circ): ≈1 para un círculo perfecto o <1 cuanto más irregular/elongado (pellets suelen estar altos; fragmentos, bajos)
+`circularity (circ)`: ≈1 para un círculo perfecto o <1 cuanto más irregular/elongado (pellets suelen estar altos; fragmentos, bajos)
 
-aspect (relación de aspecto) = ancho/alto del rectángulo envolvente: muy cercano ≈1 en objetos redondos (pellets), mucho >1 o <1 cuando es alargado
+`aspect (relación de aspecto)` = ancho/alto del rectángulo envolvente: muy cercano ≈1 en objetos redondos (pellets), mucho >1 o <1 cuando es alargado
 
-extent = área ocupada / área del bbox: Cercano a 1 si el objeto llena su caja (regular/compacto), más bajo si es muy irregular o hay huecos
+`extent` = área ocupada / área del bbox: Cercano a 1 si el objeto llena su caja (regular/compacto), más bajo si es muy irregular o hay huecos
 
-solidity = área / área del casco convexo: 1 si es convexo y sin muescas, menor que 1 cuanto más dentado o con concavidades (típico de fragmentos irregulares)
+`solidity` = área / área del casco convexo: 1 si es convexo y sin muescas, menor que 1 cuanto más dentado o con concavidades (típico de fragmentos irregulares)
 
-ellipse_ratio = eje mayor / eje menor de la elipse ajustada: muy cercano ≈1 si es circular o >1 si está aplastado o alargado (fragmentos), se necesita len(cnt) ≥ 5 para poder ajustar una elipse
+`ellipse_ratio` = eje mayor / eje menor de la elipse ajustada: muy cercano ≈1 si es circular o >1 si está aplastado o alargado (fragmentos), se necesita len(cnt) ≥ 5 para poder ajustar una elipse
 
-rad_ratio (radio mínimo / radio máximo desde el centroide al contorno): muy cercano ≈1 en objetos equidistantes al centro (redondos), pequeño en objetos alargados o con pinchos
+`rad_ratio` (radio mínimo / radio máximo desde el centroide al contorno): muy cercano ≈1 en objetos equidistantes al centro (redondos), pequeño en objetos alargados o con pinchos
 
-v_mean: brillo medio del objeto
+`v_mean`: brillo medio del objeto
 
-p10_v: percentil 10 de V → se fija en la cola oscura (suele ser más estable para detectar TAR que la media)
+`p10_v`: percentil 10 de V → se fija en la cola oscura (suele ser más estable para detectar TAR que la media)
 
-dark_frac: proporción de píxeles muy oscuros
+`dark_frac`: proporción de píxeles muy oscuros
 
-s_mean: saturación media (plásticos coloreados tienden a saturaciones mayores; puede ayudar a distinguir pellets coloreados de fragmentos blanquecinos)
+`s_mean`: saturación media (plásticos coloreados tienden a saturaciones mayores; puede ayudar a distinguir pellets coloreados de fragmentos blanquecinos)
 
 Resumen geométrico: los pellets tienden a circularity alta, solidity alta, aspect≈1, ellipse_ratio≈1, rad_ratio alto; fragmentos suelen bajar en varias de estas; el alquitrán puede ser compacto pero a veces muy irregular.
 
@@ -750,11 +750,11 @@ def learn_thresholds(df):
 ````
 Calcula medianas por clase y coloca el umbral a mitad de camino entre clases, con un margen (IQR):
 
-TAR: usa p10_v (cuanto más bajo, más oscuro) y dark_frac (cuanto más alto, más oscuro).
+`TAR`: usa p10_v (cuanto más bajo, más oscuro) y dark_frac (cuanto más alto, más oscuro).
 
-PEL: usa circularidad, solidity y rad_ratio (propias de objetos redondeados y compactos).
+`PEL`: usa circularidad, solidity y rad_ratio (propias de objetos redondeados y compactos).
 
-MARGIN_TAR y MARGIN_PEL “empujan” los umbrales para favorecer la detección de esa clase.
+`MARGIN_TAR` y `MARGIN_PEL` “empujan” los umbrales para favorecer la detección de esa clase.
 
 ## 7. Reglas de decisión
 ````python
