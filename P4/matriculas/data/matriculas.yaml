@@ -1,0 +1,7 @@
+train: C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/train/images
+val:   C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/val/images
+test:  C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/test/images 
+
+nc: 1
+
+names: ['plate']

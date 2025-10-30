@@ -7,10 +7,9 @@ import glob
 # Debes ajustar estas rutas según tu proyecto
 
 # Ruta a la carpeta que contiene TODAS tus imágenes originales
-SOURCE_IMAGES_DIR = "P4\plates" 
+SOURCE_IMAGES_DIR = "C:\\Users\\luisp\\Desktop\\VC\\prac1\\P4\\plates"
+SOURCE_LABELS_DIR = "C:\\Users\\luisp\\Desktop\\VC\\prac1\\P4\\plates\\txt"
 
-# Ruta a la carpeta que contiene TODOS tus labels (.txt) originales
-SOURCE_LABELS_DIR = "P4\plates\labels" 
 
 # Carpeta de salida donde se creará la estructura train/val/test
 OUTPUT_DIR = "matriculas" 
