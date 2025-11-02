@@ -1,0 +1,17 @@
+
+train:
+  - C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/train
+
+# Validación
+val:
+  - C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/val
+
+# Test (opcional)
+test:
+  - C:/Users/luisp/Desktop/VC/prac1/P4/matriculas/test
+
+# Número de clases
+nc: 1
+
+# Nombres de las clases
+names: ['plate']

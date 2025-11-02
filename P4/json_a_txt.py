@@ -12,13 +12,10 @@ CLASS_MAPPING = {
 }
 
 # Ruta a la carpeta que contiene TODOS tus archivos .json
-SOURCE_JSON_DIR = "D:\EII\plates\labels"
+SOURCE_JSON_DIR = r"C:\Users\luisp\Desktop\VC\prac1\UC3M-LP\test"
+SOURCE_IMAGES_DIR = r"C:\Users\luisp\Desktop\VC\prac1\UC3M-LP\test"
+OUTPUT_TXT_DIR   = r"C:\Users\luisp\Desktop\VC\prac1\P4\plates\txt"
 
-# Ruta a la carpeta que contiene TODAS tus imágenes (para obtener sus dimensiones)
-SOURCE_IMAGES_DIR = "D:\EII\plates"
-
-# Carpeta de salida donde se guardarán los nuevos .txt
-OUTPUT_TXT_DIR = "D:\EII\plates\\txt" 
 
 # ---------------------------
 
