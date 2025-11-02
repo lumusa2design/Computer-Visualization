@@ -4,3 +4,5 @@
 plates/
 **/plates/
 plates/*
+P4/runs/*
+*.mp4

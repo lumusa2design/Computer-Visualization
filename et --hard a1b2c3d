@@ -1,0 +1,133 @@
+[33m68e5f4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m455b2af[m HEAD@{1}: commit: feat: trained yolo
+[33m68e5f4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: reset: moving to HEAD~1
+[33mbe654f7[m HEAD@{3}: commit: feat: trained yolo
+[33m68e5f4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{4}: commit: training model
+[33md124ff9[m HEAD@{5}: commit: added trained mdel
+[33ma8254d9[m HEAD@{6}: commit: feat: trained
+[33m6b3098a[m HEAD@{7}: commit: plates
+[33m190ec66[m HEAD@{8}: pull: Merge made by the 'ort' strategy.
+[33m9183016[m HEAD@{9}: commit: labels
+[33m00ae036[m HEAD@{10}: pull: Merge made by the 'ort' strategy.
+[33m6bccbea[m HEAD@{11}: pull: Merge made by the 'ort' strategy.
+[33med617e2[m HEAD@{12}: commit: images
+[33m7323fb6[m HEAD@{13}: commit: add: git ignore
+[33m6526dfb[m HEAD@{14}: commit: DOC: readme updated
+[33m76dd0b3[m HEAD@{15}: commit: Renamed to have a serialized structured
+[33md2ce98f[m HEAD@{16}: pull: Merge made by the 'ort' strategy.
+[33m99a22d0[m HEAD@{17}: commit: nose
+[33m6558fe8[m HEAD@{18}: commit: feat: P4
+[33m73a9f71[m HEAD@{19}: commit: add tags
+[33mfedc319[m HEAD@{20}: commit: DOC: Update bibliografy
+[33m79717da[m HEAD@{21}: commit: DOC: Update links of main readme hub
+[33mb2c3a17[m HEAD@{22}: pull: Fast-forward
+[33m1e7fc94[m HEAD@{23}: commit: DOC readme of prac 3
+[33m3c815e5[m HEAD@{24}: commit: DOC readme of prac 3
+[33m2d537f5[m HEAD@{25}: commit: DOC readme of prac 3
+[33m7c3ee99[m HEAD@{26}: commit: DOC readme of prac 3
+[33me1452e1[m HEAD@{27}: commit: DOC readme of prac 3
+[33m01cf42b[m HEAD@{28}: pull: Fast-forward
+[33mf9f61fa[m HEAD@{29}: commit: FEAT: DETECTION WITH OVERCLIPPING
+[33m2d1e2f8[m HEAD@{30}: commit: FEAT: DETECTION WITH OVERCLIPPING
+[33m6ca963c[m HEAD@{31}: commit: UPDATED: README
+[33ma0e465d[m[33m ([m[1;31morigin/lumusa[m[33m, [m[1;32mlumusa[m[33m)[m HEAD@{32}: merge lumusa: Fast-forward
+[33ma1d0c9f[m HEAD@{33}: checkout: moving from lumusa to main
+[33ma0e465d[m[33m ([m[1;31morigin/lumusa[m[33m, [m[1;32mlumusa[m[33m)[m HEAD@{34}: merge @{-1}: Merge made by the 'ort' strategy.
+[33m2926e31[m HEAD@{35}: checkout: moving from main to lumusa
+[33ma1d0c9f[m HEAD@{36}: pull: Fast-forward
+[33mcf5cada[m HEAD@{37}: checkout: moving from lumusa to main
+[33m2926e31[m HEAD@{38}: commit (merge): Merge branch 'main' into lumusa
+[33m1eff222[m HEAD@{39}: checkout: moving from main to lumusa
+[33mcf5cada[m HEAD@{40}: checkout: moving from lumusa to main
+[33m1eff222[m HEAD@{41}: commit: feat: p3
+[33mb355a60[m HEAD@{42}: checkout: moving from ca242aafa9ddc04f7ab5b150886154f39babce49 to lumusa
+[33mca242aa[m HEAD@{43}: checkout: moving from lumusa to Guille
+[33mb355a60[m HEAD@{44}: checkout: moving from main to lumusa
+[33mcf5cada[m HEAD@{45}: commit: doc: reduce style comments
+[33m27874fd[m HEAD@{46}: commit: task1: coins
+[33m8a14910[m HEAD@{47}: commit: task1: coins
+[33m2c9437d[m HEAD@{48}: commit: solve conlficts
+[33m72d1a2d[m HEAD@{49}: pull: Fast-forward
+[33m5bfb28a[m HEAD@{50}: pull: Fast-forward
+[33ma57eaff[m HEAD@{51}: pull: Merge made by the 'ort' strategy.
+[33m7c74964[m HEAD@{52}: commit: DOC: task 3
+[33m2ae6c4a[m HEAD@{53}: commit: updated
+[33me0a82b1[m HEAD@{54}: commit: fixed: merged
+[33mb9ddb1a[m HEAD@{55}: pull: Fast-forward
+[33mf8bd6d6[m HEAD@{56}: commit: README: Task 1 explained
+[33m5136688[m HEAD@{57}: commit: style: reduced unused elements
+[33m5cac364[m HEAD@{58}: pull: Fast-forward
+[33m7551539[m HEAD@{59}: merge lumusa: Merge made by the 'ort' strategy.
+[33mdfc6a6b[m HEAD@{60}: checkout: moving from lumusa to main
+[33mb355a60[m HEAD@{61}: commit: feat: neon line
+[33m0d06ae1[m HEAD@{62}: checkout: moving from main to lumusa
+[33mdfc6a6b[m HEAD@{63}: commit (merge): Merge branch 'lumusa'
+[33mf857e6c[m HEAD@{64}: commit: conflicts on main
+[33m1bac6b9[m HEAD@{65}: reset: moving to HEAD
+[33m1bac6b9[m HEAD@{66}: checkout: moving from lumusa to main
+[33m0d06ae1[m HEAD@{67}: checkout: moving from dev to lumusa
+[33m36dc082[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{68}: commit (merge): no se que esta pasando con el merge
+[33m1bac6b9[m HEAD@{69}: reset: moving to HEAD
+[33m1bac6b9[m HEAD@{70}: checkout: moving from lumusa to dev
+[33m0d06ae1[m HEAD@{71}: reset: moving to HEAD
+[33m0d06ae1[m HEAD@{72}: checkout: moving from main to lumusa
+[33m1bac6b9[m HEAD@{73}: reset: moving to HEAD
+[33m1bac6b9[m HEAD@{74}: reset: moving to HEAD
+[33m1bac6b9[m HEAD@{75}: checkout: moving from lumusa to main
+[33m0d06ae1[m HEAD@{76}: commit: task3: feat: colors
+[33mf2c8e35[m HEAD@{77}: checkout: moving from main to lumusa
+[33m1bac6b9[m HEAD@{78}: checkout: moving from lumusa to main
+[33mf2c8e35[m HEAD@{79}: commit: task3: feat: colors
+[33m7b5cbd2[m HEAD@{80}: commit: feat: task3 canny filer
+[33m2b06e9d[m HEAD@{81}: commit: task3: add mode charger
+[33m170f3ae[m HEAD@{82}: commit: feat: task 3 initialize
+[33m200e1fb[m HEAD@{83}: checkout: moving from Guille to lumusa
+[33mca242aa[m HEAD@{84}: pull: Fast-forward
+[33mc52441e[m HEAD@{85}: checkout: moving from main to Guille
+[33m1bac6b9[m HEAD@{86}: merge dev: Fast-forward
+[33mea8e598[m HEAD@{87}: checkout: moving from dev to main
+[33m1bac6b9[m HEAD@{88}: commit (merge): feat: merged task 2
+[33m200e1fb[m HEAD@{89}: checkout: moving from lumusa to dev
+[33m200e1fb[m HEAD@{90}: reset: moving to HEAD
+[33m200e1fb[m HEAD@{91}: commit: feat: task 2 finished
+[33mdfca666[m HEAD@{92}: commit: feat: task 2
+[33m2ded2fa[m HEAD@{93}: checkout: moving from Guille to lumusa
+[33mc52441e[m HEAD@{94}: checkout: moving from lumusa to Guille
+[33m2ded2fa[m HEAD@{95}: commit: feat: comparision between canny and sobel
+[33mea8e598[m HEAD@{96}: checkout: moving from main to lumusa
+[33mea8e598[m HEAD@{97}: commit: fixed
+[33maf0e802[m HEAD@{98}: commit: deleted: useless documentation
+[33m3a6a360[m HEAD@{99}: pull: Fast-forward
+[33mceede65[m HEAD@{100}: pull: Merge made by the 'ort' strategy.
+[33m01d3658[m HEAD@{101}: commit: feat: prac2
+[33m5f415ef[m HEAD@{102}: commit: added practical lesson 2
+[33m91c763e[m HEAD@{103}: commit: fixed: link
+[33m14f68a4[m HEAD@{104}: commit: fixed little style problems and added link to jupyter notebook
+[33mc40abd2[m HEAD@{105}: commit: DOC: Finished readme
+[33ma368bdb[m HEAD@{106}: commit: fixed: visualization of the content
+[33mcfea612[m HEAD@{107}: commit: DOC: Added readme hub
+[33m0d9254c[m HEAD@{108}: commit: DOC: added images
+[33m2baf3b5[m HEAD@{109}: commit: fixed problem details
+[33m3bcc80a[m HEAD@{110}: commit: DOC: tabel of contents and author badges
+[33m02447df[m HEAD@{111}: commit: DOC: tabel of contents and author badges
+[33mbcaa79d[m HEAD@{112}: commit: DOC: Task 5
+[33mdeb4485[m HEAD@{113}: commit: style: centered title of readme
+[33me8fb1de[m HEAD@{114}: commit: DOC: Task 4.2
+[33m1d00cb5[m HEAD@{115}: commit: DOC: Task 4
+[33mf88f954[m HEAD@{116}: commit: DOC: added badges
+[33mf14360e[m HEAD@{117}: commit: DOC: Task 4
+[33mc29cc9c[m HEAD@{118}: commit: DOC: task 2
+[33m0bec44b[m HEAD@{119}: commit: DOC: first task
+[33mfe63eb9[m HEAD@{120}: pull: Fast-forward
+[33m6ffe693[m HEAD@{121}: commit: fix: counter
+[33mcbe0a34[m HEAD@{122}: pull: Fast-forward
+[33m32f505b[m HEAD@{123}: commit: comic filter
+[33ma9c10af[m HEAD@{124}: commit: feat: pop up art
+[33m7b4f216[m HEAD@{125}: commit: feat: 8x8 lightest and darkest rectangle
+[33mfe8ffeb[m HEAD@{126}: commit: feat: darkest and lightest search on an opencv image
+[33m45bb83b[m HEAD@{127}: commit: feat: random color generator and flip in intervale of 300 fotograms
+[33m8f4156d[m HEAD@{128}: commit: code: started modrian structure and chess
+[33m8c4cee3[m HEAD@{129}: commit: refactor positions of the directory
+[33m6f637cb[m HEAD@{130}: commit: added: practical lesson archives
+[33m94e1e06[m HEAD@{131}: commit: first commit
+[33mc2c6402[m HEAD@{132}: checkout: moving from master to main
