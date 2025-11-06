@@ -58,29 +58,11 @@ hola
 --- 
 ## Trabajo realizado
 
-- **Tarea 1**: `Guillermo`
-- **Tarea 2**: `Guillermo (Sobel) y Luis (Gráfica)` 
-- **Tarea 3**: `Luis` 
-- **Tarea 4**: `Guillermo y Luis` 
+- **Tarea**: `Guillermo y Luis` 
 - **README**: `Guillermo y Luis`  
 
 --- 
 
 ## Recursos usados
 
-### Tarea 1:
-- [Video explicativo de detección de monedas 1](https://www.youtube.com/watch?v=zKgrvraIYWc)
-- [Vídeo explicativo de detección de monedas 2]()
-- [Explicación de detección de círculos con scikit-image para mayor entendimiento de la transformada de Hough](https://scikit-image.org/docs/0.23.x/auto_examples/edges/plot_circular_elliptical_hough_transform.html)
-- [Página para entender algoritmos simples de detección con los círculos de Hough con matlab](https://www.mathworks.com/help/images/ref/imfindcircles.html)
-- [Segmentación de monedas](https://blog.christianperone.com/2014/06/simple-and-effective-coin-segmentation-using-python-and-opencv)
-
-- Uso de IA para explicación de errores al compilar
-
-### Tarea 2:
-
-- Apuntes usados en la asignatura
-
-### README:
-
-- Se uso la base de la práctica 1
+### Tarea:
