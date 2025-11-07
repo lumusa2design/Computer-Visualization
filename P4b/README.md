@@ -257,19 +257,8 @@ Ejecuta el código.
 
 ## Recursos usados
 
-### Tarea 1:
-- [Video explicativo de detección de monedas 1](https://www.youtube.com/watch?v=zKgrvraIYWc)
-- [Vídeo explicativo de detección de monedas 2]()
-- [Explicación de detección de círculos con scikit-image para mayor entendimiento de la transformada de Hough](https://scikit-image.org/docs/0.23.x/auto_examples/edges/plot_circular_elliptical_hough_transform.html)
-- [Página para entender algoritmos simples de detección con los círculos de Hough con matlab](https://www.mathworks.com/help/images/ref/imfindcircles.html)
-- [Segmentación de monedas](https://blog.christianperone.com/2014/06/simple-and-effective-coin-segmentation-using-python-and-opencv)
-
-- Uso de IA para explicación de errores al compilar
-
-### Tarea 2:
-
-- Apuntes usados en la asignatura
-
-### README:
-
-- Se uso la base de la práctica 1
+- Guía proporcionada por los docentes de la asignatura.
+- Chatgpt para corrección de código, guía de instalación y mejora de funciones auxiliares.
+- [Reconocimiento de Placas Vehiculares con Python: YOLO, OPENCV y PADDLEOCR.](https://www.youtube.com/watch?v=Ftfwm-0L-c0&t=783s)
+- [Ultralytics](https://www.ultralytics.com/es/blog/using-ultralytics-yolo11-for-automatic-number-plate-recognition)
+- [Pexels](https://www.pexels.com/es-es/buscar/videos/tr%C3%A1fico/)
