@@ -393,7 +393,7 @@ Muestra un mensaje de éxito al finalizar el proceso.
   print("\n¡Reparto completado exitosamente!")
 ```
 
-## Descripción de la Práctica 4
+## Descripción de VC_P4.ipynb
 A continuación, vamos a explicar el código de la práctica implementada, con sus diferentes pasos desglosados.
 
 Entrenamiento del modelo YOLO
@@ -612,87 +612,310 @@ Este bloque de código define varios parámetros utilizados en un sistema de det
 
 - `MISSING_TOLERANCE`: Este parámetro define el número máximo de fotogramas que un objeto puede estar ausente (por ejemplo, fuera de la vista o perdido) antes de que se considere que el objeto ya no está presente.
 
+A continuación, vamos a explicar paso a paso lo que hace cada función auxiliar entre todas las que creamos y cómo se integra en el flujo general del proceso.
+```python
+def clamp_roi(x1, y1, x2, y2, W, H):
+    x1 = max(0, min(W, x1)); x2 = max(0, min(W, x2))
+    y1 = max(0, min(H, y1)); y2 = max(0, min(H, y2))
+    return x1, y1, x2, y2
+```
+- Propósito: Restringe las coordenadas del área de interés (ROI) dentro de los límites de la imagen.
+
+- Uso: Asegura que los valores de las coordenadas de la caja delimitadora no estén fuera del tamaño de la imagen.
+```python
+def upscale_crop(crop, target_min_side=900, max_side=1600):
+    h, w = crop.shape[:2]
+    s = max(h, w)
+    if s < target_min_side:
+        r = target_min_side / s
+        nw, nh = int(w*r), int(h*r)
+        if max(nw, nh) > max_side:
+            r = max_side / max(w, h)
+            nw, nh = int(w*r), int(h*r)
+        return cv2.resize(crop, (nw, nh), interpolation=cv2.INTER_CUBIC)
+    return crop
+```
+- Propósito: Escala un recorte de la imagen (crop) para que su dimensión más pequeña sea al menos de target_min_side y que no exceda max_side en ninguna dirección.
+
+- Uso: Ajusta el tamaño del recorte de la matrícula para que sea adecuado para la detección.
 
 ```python
-
+def plausible_plate_absrel(w, h, veh_w, veh_h):
+    area = w * h
+    if area < MIN_PLATE_AREA: return False
+    ar = w / max(1, h)
+    if ALLOW_TWO_LINE and (1.2 <= ar <= 2.2):
+        pass
+    elif not (PLATE_AR_MIN <= ar <= PLATE_AR_MAX):
+        return False
+    rel_area = area / (max(1, veh_w) * max(1, veh_h))
+    if not (VEH_PLATE_AREA_FRAC_MIN <= rel_area <= VEH_PLATE_AREA_FRAC_MAX):
+        return False
+    rel_h = h / max(1, veh_h)
+    if not (PLATE_VH_FRAC_MIN <= rel_h <= PLATE_VH_FRAC_MAX):
+        return False
+    return True
 ```
+- Propósito: Verifica si el área y las proporciones de la matrícula son plausibles para un vehículo dado, considerando el área mínima, la relación de aspecto y la fracción del área del vehículo ocupada por la matrícula.
+
+- Uso: Se utiliza para filtrar detecciones de matrículas que no cumplen con las condiciones establecidas (por ejemplo, si son demasiado pequeñas o de proporciones inusuales).
 
 ```python
-
+def blur_box(img, x1, y1, x2, y2, k=31):
+    x1,y1,x2,y2 = map(int, (x1,y1,x2,y2))
+    roi = img[y1:y2, x1:x2]
+    if roi.size == 0: 
+        return img
+    blur = cv2.GaussianBlur(roi, (k|1, k|1), 0)
+    img[y1:y2, x1:x2] = blur
+    return img
 ```
+- Propósito: Aplica un desenfoque gaussiano sobre una región específica de la imagen (es decir, el área de una detección) para anonimizar los datos.
+
+- Uso: Se activa si ANONYMIZE está configurado como True.
 
 ```python
-
+def is_headlight_like(crop_box):
+    g = cv2.cvtColor(crop_box, cv2.COLOR_BGR2GRAY)
+    thr = cv2.threshold(g, 230, 255, cv2.THRESH_BINARY)[1]
+    white_frac = thr.mean() / 255.0
+    edges = cv2.Canny(g, 80, 160)
+    vert = cv2.Sobel(g, cv2.CV_64F, 1, 0, ksize=3)
+    return (white_frac > 0.65 and edges.mean() < 12 and np.abs(vert).mean() < 6)
 ```
+
+- Propósito: Detecta si una región en la imagen se asemeja a un faro de vehículo (basado en el color y las características de bordes).
+
+- Uso: Se utiliza en el filtro de matrículas para evitar falsos positivos causados por luces brillantes en las imágenes.
 
 ```python
-
+def find_plate_by_contours(crop):
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray, 9, 75, 75)
+    edges = cv2.Canny(gray, 50, 150)
+    edges = cv2.dilate(edges, None, iterations=1)
+    cnts, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    best, best_area = None, 0
+    Hc, Wc = crop.shape[:2]
+    for c in cnts:
+        x, y, w, h = cv2.boundingRect(c)
+        if w < 20 or h < 10: 
+            continue
+        if x < 2 or y < 2 or x+w > Wc-2 or y+h > Hc-2:
+            continue
+        area = w*h
+        if area > best_area:
+            best = (x, y, x+w, y+h); best_area = area
+    return best
 ```
+- Propósito: Detecta la matrícula en una imagen de recorte usando contornos y detección de bordes.
+
+- Uso: Se utiliza como un método de respaldo para encontrar matrículas si el modelo YOLO no las detecta con alta precisión.
 
 ```python
-
+def position_filters(mx1,my1,mx2,my2, vx1,vy1,vx2,vy2):
+    veh_w = vx2 - vx1; veh_h = vy2 - vy1
+    vx_c = (vx1 + vx2) * 0.5
+    mx_c = (mx1 + mx2) * 0.5
+    my_c = (my1 + my2) * 0.5
+    if abs(mx_c - vx_c) / max(1, veh_w * 0.5) > 0.55:
+        return False
+    if not (vy1 + 0.45*veh_h <= my_c <= vy1 + 0.95*veh_h):
+        return False
+    return True
 ```
+- Propósito: Filtra las detecciones de matrículas que no están en la posición correcta dentro de la caja del vehículo.
+
+- Uso: Ayuda a asegurar que las matrículas detectadas están en la ubicación esperada en relación con el vehículo.
+```python
+def score_plate_abs(px1, py1, px2, py2, pconf, vx1, vy1, vx2, vy2):
+    mx_c = (px1+px2)*0.5; my_c = (py1+py2)*0.5
+    vx_c = (vx1+vx2)*0.5; vy_c = (vy1+vy2)*0.5
+    veh_w = vx2-vx1; veh_h = vy2-vy1
+    cx_pen = abs(mx_c - vx_c) / max(1, veh_w*0.5)
+    cy_pen = abs(my_c - (vy1+0.78*veh_h)) / max(1, veh_h*0.5)
+    return pconf - 0.6*cx_pen - 0.3*cy_pen
+```
+- Propósito: Calcula una puntuación para la detección de una matrícula basada en la ubicación y la confianza de la predicción.
+
+- Uso: Se utiliza para ajustar las detecciones de matrículas en función de su proximidad al vehículo.
+
+Después de la implementación de estas funciones, pasamos a la captura del vídeo y a realizar las detecciones, así como procesar los resultados obtenidos. Explicaremos paso por paso el procedimiento:
+
+#### 1. Lectura del Video
+```python
+ok, frame = cap.read()
+if not ok:
+    break
+```
+- `cap.read()`: Lee un fotograma del video de entrada. Si no se puede leer el fotograma (por ejemplo, si se ha llegado al final del video), el bucle termina con break.
+#### 2. Detección y Seguimiento con YOLO
+```python
+gen = detector.track(
+    source=frame, stream=True, persist=True,
+    tracker=TRACKER, conf=DET_CONF, verbose=False
+)
+```
+- `detector.track()`: Utiliza el modelo YOLO para realizar el seguimiento de objetos en el fotograma actual. Devuelve un generador que produce los resultados de la detección y el seguimiento.
+
+- `source=frame`: El fotograma actual del video.
+
+- `stream=True`: Indica que el procesamiento es continuo (en flujo).
+
+- `persist=True`: Mantiene la información entre fotogramas para realizar un seguimiento persistente.
+
+- `tracker=TRACKER`: Utiliza un modelo de seguimiento (definido en TRACKER).
+
+- `conf=DET_CONF`: La confianza mínima de las detecciones (por encima de este valor, las detecciones se consideran válidas).
+#### 3. Procesar los Resultados de la Detección
+```python
+try:
+    res = next(gen)
+except StopIteration:
+    res = None
+```
+- `next(gen)`: Extrae el siguiente resultado del generador (gen), que contiene las detecciones para el fotograma actual.
+
+- `StopIteration`: Si no hay más resultados (es decir, el generador ha terminado), res se asigna a None.
+#### 4. Comprobación de Detecciones
+```python
+if res is None or res.boxes is None or len(res.boxes) == 0:
+    writer.write(frame)
+    frame_idx += 1
+    continue
+```
+- Si no se detectan objetos (`res.boxes` es None o está vacío), el fotograma se guarda tal cual en el video de salida (`writer.write(frame)`) y se pasa al siguiente fotograma.
+#### 5. Procesar las Detecciones
+```python
+names = detector.model.names
+boxes = res.boxes
+active_ids = set()
+```
+- `names`: Obtiene los nombres de las clases del modelo YOLO (por ejemplo, person, car, etc.).
+
+- `boxes`: Contiene las cajas delimitadoras de las detecciones de objetos.
+
+- `active_ids`: Un conjunto que almacena los identificadores de seguimiento de los objetos detectados.
+
+#### 6. Filtrar y Dibujar Detecciones
+```python
+for b in boxes:
+    if b.cls is None or b.conf is None or b.xyxy is None:
+        continue
+
+    cls_id = int(b.cls[0].item())
+    conf = float(b.conf[0].item())
+    name = names.get(cls_id, str(cls_id))
+    if name not in TARGET_CLASSES:
+        continue
+```
+- Para cada detección en `boxes`, se extraen el identificador de clase (`cls_id`), la confianza de la detección (`conf`), y las coordenadas de la caja delimitadora (`xyxy`).
+
+- `TARGET_CLASSES`: Filtra las detecciones para que solo se procesen las clases que nos interesan (por ejemplo, vehículos).
 
 ```python
-
+x1, y1, x2, y2 = map(int, b.xyxy[0].tolist())
+tid = int(b.id[0].item()) if b.id is not None else -1
+active_ids.add(tid)
 ```
+- `x1, y1, x2, y2`: Coordenadas de la caja delimitadora (esquina superior izquierda `(x1, y1)` y esquina inferior derecha `(x2, y2)`).
 
+- `tid`: Identificador de seguimiento del objeto. Si no está presente, se asigna -1.
+#### 7. Anónimización o Dibujo de las Detecciones
 ```python
-
+if ANONYMIZE:
+    frame = blur_box(frame, x1, y1, x2, y2, k=35)
+else:
+    color = (0, 255, 0) if name != "person" else (0, 200, 255)
+    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+    cv2.putText(frame, f"{name} {conf:.2f} ID:{tid}",
+                (x1, max(0, y1 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 ```
+- __Anónimización__: Si `ANONYMIZE` está activado, se aplica un desenfoque a la caja delimitadora.
 
+- __Dibujo de la detección__: Si no se anonimiza, se dibuja un rectángulo alrededor del objeto y se muestra su clase, confianza y el ID de seguimiento.
+
+#### 8. Detección de Matrículas en Vehículos
 ```python
-
+plate_flag, plate_conf, (mx1,my1,mx2,my2), plate_text = 0, 0.0, (0,0,0,0), ""
+if name in {"car","motorbike","bus","truck"}:
+    # Cálculos para obtener la región donde se encuentra la matrícula
 ```
-
+- Si la clase detectada es un vehículo (coche, motocicleta, autobús, camión), se realiza una serie de cálculos para determinar la región de la imagen que probablemente contenga la matrícula.
 ```python
-
+crop = frame[ry1:ry2, rx1:rx2]
+crop_up = upscale_crop(crop, target_min_side=900, max_side=1600)
 ```
+- `crop`: Recorta la región del vehículo para centrarse en la zona que podría contener la matrícula.
 
+- `crop_up`: Se escala la imagen recortada para mejorar la calidad de la detección de la matrícula.
 ```python
-
+pp = plate_model.predict(
+    source=crop_up,
+    conf=PLATE_CONF,
+    iou=PLATE_IOU,
+    imgsz=PLATE_IMGSZ,
+    max_det=5,
+    augment=True,
+    agnostic_nms=False,
+    verbose=False
+)
 ```
+- `plate_model.predict()`: Utiliza el modelo de detección de matrículas para predecir la ubicación de las matrículas en el recorte escalado.
 
+#### 9. Filtrado de la Mejor Detección de Matrícula
 ```python
-
+if pp and len(pp[0].boxes) > 0:
+    for pb in pp[0].boxes:
+        px1, py1, px2, py2 = pb.xyxy[0].tolist()
+        pconf = float(pb.conf[0].item())
+        ...
 ```
+- `pp[0].boxes`: Accede a las cajas delimitadoras predichas para las matrículas en el recorte.
 
+- Se filtran las detecciones que no cumplen con los criterios de tamaño, relación de aspecto y otros parámetros, como la posición.
+#### 10. Almacenamiento de Detecciones de Matrículas y Vehículos
 ```python
-
+push_history(tid_key, (bx1,by1,bx2,by2,bconf))
 ```
+- `push_history`: Almacena las detecciones en un historial para realizar un seguimiento de las matrículas a lo largo de los fotogramas.
 
+#### 11. Anotación en el Video
 ```python
-
+if g:
+    gx1, gy1, gx2, gy2, gc = g
+    plate_flag, plate_conf = 1, gc
+    mx1,my1,mx2,my2 = gx1,gy1,gx2,gy2
+    cv2.rectangle(frame, (gx1, gy1), (gx2, gy2), (255, 0, 0), 2)
+    cv2.putText(frame, f"PLATE {gc:.2f}", (gx1, max(0, gy1 - 6)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
 ```
+- Si se encuentra una matrícula válida, se dibuja un rectángulo alrededor de ella y se muestra la confianza de la detección en el video.
 
+#### 12. Escribir Resultados en el CSV
 ```python
-
+cw.writerow([frame_idx, name, f"{conf:.3f}", tid, x1, y1, x2, y2,
+            plate_flag, f"{plate_conf:.3f}", mx1, my1, mx2, my2, ""])
 ```
-
+- Escribe los resultados de la detección (nombre del objeto, confianza, ID, coordenadas de la caja delimitadora, etc.) en un archivo CSV.
+#### 13. Análisis del Flujo 
 ```python
-
+if FLOW_ANALYSIS:
+    ids_to_check = set(list(last_centroid.keys()) + list(inactive_counter.keys()))
+    for gid in list(ids_to_check):
+        ...
 ```
-
+- `FLOW_ANALYSIS`: Si está activado, realiza un análisis del flujo de objetos (por ejemplo, cuántos objetos salen de la vista por los bordes de la imagen).
+#### 14. Escribir el Video de Salida
 ```python
-
+writer.write(frame)
+frame_idx += 1
 ```
+- `writer.write(frame)`: Escribe el fotograma procesado (con las anotaciones) en el video de salida.
 
-```python
+**Resumen**
 
-```
-
-```python
-
-```
-
-```python
-
-```
-
-```python
-
-```
-
+El bloque de código realizado se encarga de leer cada fotograma del video, realizar la detección de objetos con YOLO, rastrear los vehículos y matrículas, y escribir los resultados tanto en un archivo CSV como en un nuevo video con anotaciones. Además, realiza análisis de flujo de objetos y opciones de anonimización de las matrículas si se requieren.
 
 ---
 
@@ -720,4 +943,4 @@ Este bloque de código define varios parámetros utilizados en un sistema de det
 
 ## Recursos usados
 
-### Tarea:
+
