@@ -26,6 +26,8 @@ Este es el hub para poder acceder a las diferentes practicas de la asignautras v
     - [Cuaderno de Jupyter](./P3/VC_P3.ipynb)
 - [Práctica 4](./P4/README.md)
     - [Cuaderno de Jupyter](./P4/VC_P4.ipynb)
+- [Práctica 4.b](./P4b/README.md)
+    - [Cuaderno de Jupyter](./P4b/VC_P4b.ipynb)
 
 
 
