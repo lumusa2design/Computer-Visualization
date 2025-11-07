@@ -514,15 +514,104 @@ from collections import defaultdict, Counter, deque
 import numpy as np
 from ultralytics import YOLO
 ```
+- **os, csv, cv2:** Se importan estas librerías para trabajar con archivos, generar archivos CSV, y manipular videos e imágenes.
 
+- **defaultdict, Counter, deque:** Estas clases de la librería collections se usan para almacenar y manejar datos de manera eficiente (como conteos de objetos detectados).
+
+- **numpy:** Se utiliza para realizar operaciones matemáticas y manejar arreglos.
+
+- **ultralytics.YOLO:** Se importa nuevamente la clase YOLO para realizar la inferencia.
 
 ```python
-
+VIDEO_IN  = r"C:\Users\luisp\Desktop\VC\prac1\P4\videos\C0142.mp4"
+VIDEO_OUT = r"C:\Users\luisp\Desktop\VC\prac1\P4\outputs\video_annotado2.mp4"
+CSV_OUT   = r"C:\Users\luisp\Desktop\VC\prac1\P4\outputs\detecciones2.csv"
 ```
+- **VIDEO_IN:** Ruta al archivo de entrada del video que se va a procesar.
+
+- **VIDEO_OUT:** Ruta donde se guardará el video de salida con las anotaciones de detección.
+
+- **CSV_OUT:** Ruta donde se guardarán las detecciones en formato CSV.
+
+Este bloque configura las rutas necesarias para los archivos de entrada y salida.
 
 ```python
+TARGET_CLASSES = {"person", "car", "motorbike", "bus", "truck"}
+TRACKER = "bytetrack.yaml"
+DET_CONF = 0.25
 
+PLATE_CONF   = 0.28
+PLATE_IOU    = 0.60
+PLATE_IMGSZ  = 1280
+
+PLATE_ONLY_BOTTOM_BAND = True
+BOTTOM_FRAC   = 0.65
+EXTRA_BAND_UP = 0.10
+
+PLATE_AR_MIN, PLATE_AR_MAX = 3.2, 6.6
+ALLOW_TWO_LINE = True
+MIN_PLATE_AREA = 400
+
+VEH_PLATE_AREA_FRAC_MIN = 0.0015
+VEH_PLATE_AREA_FRAC_MAX = 0.08
+PLATE_VH_FRAC_MIN = 0.04
+PLATE_VH_FRAC_MAX = 0.28
+
+ANONYMIZE = False
+USE_CONTOUR_FALLBACK = True
+ANTI_HEADLIGHT = True
+FLOW_ANALYSIS = True
+
+HIST_N = 7
+ACCEPT_K = 3
+HOLD_FRAMES = 10
+
+MISSING_TOLERANCE = 12
 ```
+Este bloque de código define varios parámetros utilizados en un sistema de detección y seguimiento de objetos, especialmente centrado en la detección de matrículas de vehículos. Vamos a desglosar qué significa cada parámetro.
+
+- `TARGET_CLASSES`: Es un conjunto de clases de objetos que el modelo YOLO debe detectar. Estas clases son: personas, coches, motocicletas, autobuses y camiones. El sistema se centrará en estas clases al realizar la detección en imágenes o videos.
+
+- `DET_CONF`: Es la confianza mínima para que una detección sea considerada válida. Si el modelo tiene una probabilidad de detección mayor que 0.25, la detección será aceptada. Este parámetro puede ajustarse para filtrar detecciones de baja calidad.
+
+- `PLATE_CONF`: Es la confianza mínima para la detección de matrículas. Si la probabilidad de que una región detectada sea una matrícula es mayor que 0.28, será considerada.
+
+- `PLATE_IOU`: Es el umbral de Intersección sobre Unión (IoU) que define cuándo se considera que dos cajas delimitadoras (bounding boxes) se superponen de forma significativa. Un valor de 0.60 significa que se acepta una superposición del 60% entre dos cajas para ser consideradas una única detección.
+
+- `PLATE_IMGSZ`: Es el tamaño de imagen utilizado para entrenar o procesar las imágenes. Aquí está configurado a 1280x1280 píxeles.
+
+- `PLATE_ONLY_BOTTOM_BAND`: Indica si se debe detectar la matrícula solo en la parte inferior de la imagen. Si está configurado como True, el modelo buscará las matrículas solo en la parte inferior de la imagen.
+
+- `BOTTOM_FRAC`: Define la fracción de la imagen en la que se espera que esté la matrícula. En este caso, se busca en el 65% inferior de la imagen.
+
+- `EXTRA_BAND_UP`: Esta opción permite incluir una pequeña franja adicional por encima de la parte inferior, en este caso un 10% de la altura de la imagen, para capturar matrículas que puedan estar ligeramente más altas.
+
+- `PLATE_AR_MIN y PLATE_AR_MAX`: Estos parámetros definen el rango de la relación de aspecto de las matrículas. El valor debe estar entre 3.2 y 6.6, lo que significa que solo se aceptan cajas delimitadoras cuyo ancho sea al menos 3.2 veces el alto y no más de 6.6 veces el alto.
+
+- `ALLOW_TWO_LINE`: Indica si se permiten matrículas que tengan dos líneas de texto (por ejemplo, si la matrícula tiene más de un conjunto de caracteres en dos filas). Si está configurado en True, se permitirá esta condición.
+
+- `MIN_PLATE_AREA`: Define el área mínima que debe tener una matrícula para ser considerada. Las matrículas demasiado pequeñas (áreas menores a 400 píxeles cuadrados) se ignorarán.
+
+- `VEH_PLATE_AREA_FRAC_MIN y VEH_PLATE_AREA_FRAC_MAX`: Definen el rango de fracciones del área de la matrícula con respecto al área total del vehículo. La matrícula debe ocupar entre un 0.15% y un 8% del área total del vehículo para ser considerada válida.
+
+- `PLATE_VH_FRAC_MIN y PLATE_VH_FRAC_MAX`: Definen el rango de la fracción del área de la matrícula con respecto al área del vehículo. Se requiere que la matrícula ocupe entre el 4% y el 28% del área del vehículo para ser considerada una detección válida.
+
+- `ANONYMIZE`: Si está activado (True), las personas y vehículos pueden ser anonimizados (por ejemplo, blureando rostros o matrículas).
+
+- `USE_CONTOUR_FALLBACK`: Si es True, el sistema utilizará un enfoque de contornos para detectar matrículas si el modelo principal falla.
+
+- `ANTI_HEADLIGHT`: Si está activado, este parámetro ayuda a reducir el impacto de las luces delanteras de los vehículos al realizar la detección.
+
+- `FLOW_ANALYSIS`: Si está activado, se realiza un análisis del flujo de movimiento de los vehículos, lo que puede ayudar a mejorar la detección en escenas con mucho movimiento.
+
+- `HIST_N`: Define el número de fotogramas históricos que se usarán para el análisis de flujo de los vehículos.
+
+- `ACCEPT_K`: Es un umbral que determina cuántas veces un objeto debe ser detectado de forma consistente antes de ser aceptado como una detección válida.
+
+- `HOLD_FRAMES`: Número de fotogramas durante los cuales se mantiene el seguimiento de un objeto. Si el objeto se pierde durante ese número de fotogramas, se abandona el seguimiento.
+
+- `MISSING_TOLERANCE`: Este parámetro define el número máximo de fotogramas que un objeto puede estar ausente (por ejemplo, fuera de la vista o perdido) antes de que se considere que el objeto ya no está presente.
+
 
 ```python
 
