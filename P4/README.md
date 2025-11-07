@@ -943,4 +943,9 @@ El bloque de código realizado se encarga de leer cada fotograma del video, real
 
 ## Recursos usados
 
+- Guía proporcionada por los docentes de la asignatura.
+- Chatgpt para corrección de código, guía de instalación y mejora de funciones auxiliares.
+- [Reconocimiento de Placas Vehiculares con Python: YOLO, OPENCV y PADDLEOCR.](https://www.youtube.com/watch?v=Ftfwm-0L-c0&t=783s)
+- [Ultralytics](https://www.ultralytics.com/es/blog/using-ultralytics-yolo11-for-automatic-number-plate-recognition)
+- [Pexels](https://www.pexels.com/es-es/buscar/videos/tr%C3%A1fico/)
 
