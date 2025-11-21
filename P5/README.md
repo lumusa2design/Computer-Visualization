@@ -354,6 +354,60 @@ Los parámetros de entrada:
 - `scale`: hace que el overlay sea mas grande.
 
 Después se centra la máscara y se ajusta a la cara ya la perspectiva de la misma. Se redimensiona. En este caso la máscara tiene un canal alpha y por tanto hay que analizar ambos canales.
+
+```py
+def run_face_filter_demo():
+    pygame.mixer.init()
+    pygame.mixer.music.load("./audio/torero.mp3")
+
+    overlay = cv2.imread("./images/chayanne.webp", cv2.IMREAD_UNCHANGED)
+    if overlay is None:
+        raise RuntimeError("No se pudo cargar ./images/chayanne.webp")
+    cap = cv2.VideoCapture(1)
+    if not cap.isOpened():
+        raise RuntimeError("No se pudo abrir la webcam.")
+
+    sonido_activo = False
+```
+
+captura la camara y gestiona el sonido para cuando se ponga la máscara con un flag.
+
+```py
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        cara_detectada = False
+        try:
+            obj = DeepFace.analyze(
+                img_path=frame,
+                actions=["emotion"],
+                enforce_detection=True
+            )
+
+            if isinstance(obj, list):
+                regions = [item["region"] for item in obj]
+            else:
+                regions = [obj["region"]]
+
+            cara_detectada = True
+
+            filtered = frame.copy()
+            for region in regions:
+                filtered = overlay_on_face(filtered, region, overlay, scale=1.4)
+
+        except Exception:
+            filtered = frame.copy()
+        if cara_detectada and not sonido_activo:
+            pygame.mixer.music.play()
+            sonido_activo = True
+        elif not cara_detectada and sonido_activo:
+            pygame.mixer.music.stop()
+            sonido_activo = False
+```
+
+es el bucle principal que enciende la cámara, gestiona la detección de caras con deepface, la analiza y si detecta una cara y gestiona el sonido según la detecte o no.
  <div align="center">
 
 [![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
@@ -376,8 +430,3 @@ Después se centra la máscara y se ajusta a la cara ya la perspectiva de la mis
 
 ## Recursos usados
 
-- Guía proporcionada por los docentes de la asignatura.
-- Chatgpt para corrección de código, guía de instalación y mejora de funciones auxiliares.
-- [Reconocimiento de Placas Vehiculares con Python: YOLO, OPENCV y PADDLEOCR.](https://www.youtube.com/watch?v=Ftfwm-0L-c0&t=783s)
-- [Ultralytics](https://www.ultralytics.com/es/blog/using-ultralytics-yolo11-for-automatic-number-plate-recognition)
-- [Pexels](https://www.pexels.com/es-es/buscar/videos/tr%C3%A1fico/)
