@@ -153,6 +153,65 @@ Hemos clasificado las emociones en:
 - Enfadada
 - Neutral
 
+```py
+def run_emotion_filter_demo():
+    cap = cv2.VideoCapture(1)
+    if not cap.isOpened():
+        raise RuntimeError("No se pudo abrir la webcam.")
+
+    print("[INFO] Pulsar ESC para salir.")
+```
+Abre la cámara y gestioan posibles errores.
+
+```py
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+```
+Abre un bucle infinito que lee la cámara.
+
+```py
+        try:
+            # DeepFace devuelve una lista de dicts; usamos la primera cara
+            obj = DeepFace.analyze(
+                img_path=frame,
+                actions=['emotion'],
+                enforce_detection=True
+            )
+            # En versiones nuevas devuelve lista; en otras, dict
+            if isinstance(obj, list):
+                dominant_emotion = obj[0]['dominant_emotion']
+            else:
+                dominant_emotion = obj['dominant_emotion']
+                            filtered = apply_emotion_filter(frame, dominant_emotion)
+            txt = f"Emocion: {dominant_emotion}"
+            cv2.putText(filtered, txt, (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+        except Exception:
+            # Si no detecta cara, mostramos el frame original con aviso
+            filtered = frame.copy()
+            cv2.putText(filtered, "Sin cara / no detectada", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.imshow("Prototipo 2 - Filtros por emocion", filtered)
+        if cv2.waitKey(1) & 0xFF == 27:  # ESC
+            break
+    cap.release()
+    cv2.destroyAllWindows()
+  
+# EJEMPLO DE USO:
+run_emotion_filter_demo()
+
+
+```
+- Se analiza el frame.
+- Se analiza de forma exclusiva la emoción
+- Se extrae la emoción dominante
+- Aplica el filtro
+- Gestiona casos de error
+- Muestra la imagen
+
+
 
 
 
