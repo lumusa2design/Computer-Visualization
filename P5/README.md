@@ -130,7 +130,28 @@ importamos las librerías necesarias:
 - `numpy`: para operaciones numéricas y manipular los arrays (recordemos que una imagen en si es un array)
 - `Deepface`: sirve para detectar la emoción de la cara de la imagen.
 
+```py
+def apply_emotion_filter(frame, emotion):
+    """Aplica un filtro sencillo según la emoción detectada."""
+    emotion = emotion.lower()
+    if emotion == "happy":
+        # Aumentar saturación (más color)
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        hsv[..., 1] = np.clip(hsv[..., 1] * 1.5, 0, 255).astype(np.uint8)
+        filtered = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+...
 ```
+- `frame`: Imagen que captura la cámara.
+- `emotion`: emoción detectada.
+
+Se pasa a formato HSV el color, y cambia el color según la emoción detectada. 
+
+Hemos clasificado las emociones en:
+- Feliz
+- Triste
+- Sorpresa
+- Enfadada
+- Neutral
 
 
 
