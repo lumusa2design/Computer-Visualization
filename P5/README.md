@@ -201,8 +201,6 @@ Abre un bucle infinito que lee la cámara.
   
 # EJEMPLO DE USO:
 run_emotion_filter_demo()
-
-
 ```
 - Se analiza el frame.
 - Se analiza de forma exclusiva la emoción
@@ -211,10 +209,151 @@ run_emotion_filter_demo()
 - Gestiona casos de error
 - Muestra la imagen
 
+## Tarea 2:
 
+Para esto hemos hecho un filtro que te pone una máscara de Chayanne.
 
+```py
+import cv2
+import numpy as np
+from deepface import DeepFace 
+import pygame
 
+def overlay_on_face(frame, region, overlay, scale=1.4):
+    x = region["x"]
+    y = region["y"]
+    w = int(region["w"] * scale)
+    h = int(region["h"] * scale)
+    x = x - (w - region["w"]) // 2
+    y = y - (h - region["h"]) // 2
+    x = max(0, x)
+    y = max(0, y)
+    h_frame, w_frame = frame.shape[:2]
+    w = min(w, w_frame - x)
+    h = min(h, h_frame - y)
+    if w <= 0 or h <= 0:
+        return frame
 
+    overlay_resized = cv2.resize(overlay, (w, h))
+    if overlay_resized.shape[2] == 4:
+        b, g, r, a = cv2.split(overlay_resized)
+        overlay_bgr = cv2.merge((b, g, r))
+        alpha = a.astype(float) / 255.0
+        alpha = np.stack([alpha, alpha, alpha], axis=-1)
+        roi = frame[y:y + h, x:x + w].astype(float)
+        blended = alpha * overlay_bgr.astype(float) + (1 - alpha) * roi
+        frame[y:y + h, x:x + w] = blended.astype(np.uint8)
+    else:
+        frame[y:y + h, x:x + w] = overlay_resized
+
+    return frame
+
+def run_face_filter_demo():
+    pygame.mixer.init()
+    pygame.mixer.music.load("./audio/torero.mp3")
+
+    overlay = cv2.imread("./images/chayanne.webp", cv2.IMREAD_UNCHANGED)
+    if overlay is None:
+        raise RuntimeError("No se pudo cargar ./images/chayanne.webp")
+
+    cap = cv2.VideoCapture(1)
+    if not cap.isOpened():
+        raise RuntimeError("No se pudo abrir la webcam.")
+
+    sonido_activo = False
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        cara_detectada = False
+
+        try:
+            obj = DeepFace.analyze(
+                img_path=frame,
+                actions=["emotion"],
+                enforce_detection=True
+            )
+
+            if isinstance(obj, list):
+                regions = [item["region"] for item in obj]
+            else:
+                regions = [obj["region"]]
+
+            cara_detectada = True
+
+            filtered = frame.copy()
+            for region in regions:
+                filtered = overlay_on_face(filtered, region, overlay, scale=1.4)
+
+        except Exception:
+            filtered = frame.copy()
+
+        if cara_detectada and not sonido_activo:
+            pygame.mixer.music.play()
+            sonido_activo = True
+        elif not cara_detectada and sonido_activo:
+            pygame.mixer.music.stop()
+            sonido_activo = False
+
+        cv2.imshow("Filtro Chayanne", filtered)
+        if cv2.waitKey(1) & 0xFF == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    pygame.mixer.quit()
+
+run_face_filter_demo()
+```
+
+Si vamos desgranando:
+```py
+import cv2
+import numpy as np
+from deepface import DeepFace 
+import pygame
+```
+aquí solo usamos una librería extra respecto a la tarea anterior, pygame, que es para reproducir un sonido.
+
+```py
+def overlay_on_face(frame, region, overlay, scale=1.4):
+    x = region["x"]
+    y = region["y"]
+    w = int(region["w"] * scale)
+    h = int(region["h"] * scale)
+
+        x = x - (w - region["w"]) // 2
+    y = y - (h - region["h"]) // 2
+    x = max(0, x)
+    y = max(0, y)
+    h_frame, w_frame = frame.shape[:2]
+    w = min(w, w_frame - x)
+    h = min(h, h_frame - y)
+    if w <= 0 or h <= 0:
+        return frame
+    overlay_resized = cv2.resize(overlay, (w, h))
+    if overlay_resized.shape[2] == 4:
+        b, g, r, a = cv2.split(overlay_resized)
+        overlay_bgr = cv2.merge((b, g, r))
+        alpha = a.astype(float) / 255.0
+        alpha = np.stack([alpha, alpha, alpha], axis=-1)
+        roi = frame[y:y + h, x:x + w].astype(float)
+        blended = alpha * overlay_bgr.astype(float) + (1 - alpha) * roi
+        frame[y:y + h, x:x + w] = blended.astype(np.uint8)
+    else:
+        frame[y:y + h, x:x + w] = overlay_resized
+
+    return frame
+```
+Los parámetros de entrada:
+- `frame`: Imagen de la cámara.
+- `region`: Diccionario con la posción de la cara. Propio de deepface.
+- `overlay`: La mascara de Chayanne
+- `scale`: hace que el overlay sea mas grande.
+
+Después se centra la máscara y se ajusta a la cara ya la perspectiva de la misma. Se redimensiona. En este caso la máscara tiene un canal alpha y por tanto hay que analizar ambos canales.
  <div align="center">
 
 [![Autor: lumusa2design](https://img.shields.io/badge/Autor-lumusa2design-8A36D2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lumusa2design)
