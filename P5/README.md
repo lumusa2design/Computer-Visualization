@@ -29,7 +29,11 @@
 
  ## Instalación de dependencias
  
+A parte de las pedidas en la práctica instalamos pygames para usar el audiomixer. 
 
+```pip
+pip install pygames
+```
 ## Tarea 1
 
 En esta primera tarea hemos realizado un detector de emociones, usando deepface y sus datos biométricos para detectar y diferenciar emociones.
