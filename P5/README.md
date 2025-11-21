@@ -36,7 +36,500 @@ pip install pygames
 ```
 ## Tarea 1
 
-En esta primera tarea hemos realizado un detector de emociones, usando deepface y sus datos biométricos para detectar y diferenciar emociones.
+En esta primera tarea hemos realizado un detector de emociones, entrenando un dataset con SVM extrayendo sus datos biométricos para detectar y diferenciar emociones. Vamos a explicar como fue el entrenamiento.
+
+
+```py
+import os
+import pickle
+import numpy as np
+from deepface import DeepFace
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import precision_score, recall_score, classification_report, confusion_matrix
+
+
+def get_image_paths_by_class(dataset_folder):
+    X_paths = []
+    y_labels = []
+    for class_name in sorted(os.listdir(dataset_folder)):
+        class_dir = os.path.join(dataset_folder, class_name)
+        if not os.path.isdir(class_dir):
+            continue
+        for fname in os.listdir(class_dir):
+            if not fname.lower().endswith((".jpg", ".jpeg", ".png")):
+                continue
+            X_paths.append(os.path.join(class_dir, fname))
+            y_labels.append(class_name)
+    return X_paths, y_labels
+
+
+def compute_embeddings(image_paths, model_name="Facenet"):
+    embeddings = []
+    valid_labels_idx = []  # índices de las imágenes que sí se han podido procesar
+    for idx, path in enumerate(image_paths):
+        try:
+            emb_obj = DeepFace.represent(
+                img_path=path,
+                model_name=model_name,
+                enforce_detection=False  # asumimos que hay cara, pero no queremos que casque
+            )
+            embeddings.append(emb_obj[0]["embedding"])
+            valid_labels_idx.append(idx)
+        except Exception as e:
+            print(f"[AVISO] No se pudo procesar {path}: {e}")
+    if len(embeddings) == 0:
+        raise RuntimeError("No se pudo obtener ningún embedding. Revisa el dataset.")
+    return np.asarray(embeddings, dtype="float32"), valid_labels_idx
+
+
+def train_emotion_svm(train_folder, model_output_path, n_splits=5, model_name="Facenet"):
+    # 1) Cargar rutas e etiquetas
+    X_paths, y_labels = get_image_paths_by_class(train_folder)
+    if len(X_paths) == 0:
+        raise RuntimeError("El dataset de entrenamiento está vacío o las rutas son incorrectas.")
+
+    # 2) Embeddings
+    print("[INFO] Calculando embeddings de entrenamiento con DeepFace...")
+    X, valid_idx = compute_embeddings(X_paths, model_name=model_name)
+    y_labels = [y_labels[i] for i in valid_idx]
+
+    # 3) Codificar etiquetas
+    le = LabelEncoder()
+    y = le.fit_transform(y_labels)
+
+    # 4) Escalado + SVM
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    clf = SVC(kernel="rbf", probability=True, class_weight="balanced")
+
+    # 5) Validación cruzada
+    print("[INFO] Validación cruzada (StratifiedKFold)...")
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0)
+    precs = []
+    recs = []
+
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X_scaled, y), start=1):
+        X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_val)
+
+        prec = precision_score(y_val, y_pred, average="weighted", zero_division=0)
+        rec = recall_score(y_val, y_pred, average="weighted", zero_division=0)
+        precs.append(prec)
+        recs.append(rec)
+
+        print(f"\n=== Fold {fold} ===")
+        print(f"Precisión (weighted): {prec:.3f}")
+        print(f"Recall    (weighted): {rec:.3f}")
+        print("\nClassification report:")
+        print(classification_report(y_val, y_pred, target_names=le.classes_, zero_division=0))
+        print("Matriz de confusión:")
+        print(confusion_matrix(y_val, y_pred, labels=range(len(le.classes_))))
+
+    print("\n=== Medias sobre los folds (entrenamiento) ===")
+    print(f"Precisión media: {np.mean(precs):.3f}")
+    print(f"Recall medio:    {np.mean(recs):.3f}")
+
+    # 6) Entrenar modelo final con todos los datos de entrenamiento
+    print("\n[INFO] Entrenando modelo final con todo el conjunto de entrenamiento...")
+    clf.fit(X_scaled, y)
+
+    # 7) Guardar a disco
+    model = {
+        "scaler": scaler,
+        "label_encoder": le,
+        "classifier": clf,
+        "deepface_model_name": model_name
+    }
+    with open(model_output_path, "wb") as f:
+        pickle.dump(model, f)
+
+    print(f"[INFO] Modelo guardado en: {model_output_path}")
+
+
+def evaluate_on_folder(test_folder, model_path):
+    # 1) Cargar modelo
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    scaler = model["scaler"]
+    le = model["label_encoder"]
+    clf = model["classifier"]
+    model_name = model.get("deepface_model_name", "Facenet")
+
+    # 2) Cargar rutas e etiquetas reales
+    X_paths, y_labels = get_image_paths_by_class(test_folder)
+    if len(X_paths) == 0:
+        raise RuntimeError("El dataset de test está vacío o las rutas son incorrectas.")
+
+    print("[INFO] Calculando embeddings de test con DeepFace...")
+    X_test, valid_idx = compute_embeddings(X_paths, model_name=model_name)
+    y_labels = [y_labels[i] for i in valid_idx]
+    y_true = le.transform(y_labels)
+
+    # 3) Escalar y predecir
+    X_test_scaled = scaler.transform(X_test)
+    y_pred = clf.predict(X_test_scaled)
+
+    # 4) Métricas
+    print("\n=== Evaluación en el conjunto de test ===")
+    print("Classification report:")
+    print(classification_report(y_true, y_pred, target_names=le.classes_, zero_division=0))
+    print("Matriz de confusión:")
+    print(confusion_matrix(y_true, y_pred, labels=range(len(le.classes_))))
+
+
+if __name__ == "__main__":
+    DATA_ROOT = r"C:\Users\luisp\Desktop\VC\emotions"
+
+    TRAIN_DIR = os.path.join(DATA_ROOT, "train")  # aquí entrenas
+    TEST_DIR  = os.path.join(DATA_ROOT, "test")        # aquí evalúas
+
+    MODEL_PATH = "modelo_emociones_svm.pkl"
+
+    # Entrenar
+    train_emotion_svm(TRAIN_DIR, MODEL_PATH, n_splits=5, model_name="Facenet")
+
+    # Evaluar
+    evaluate_on_folder(TEST_DIR, MODEL_PATH)
+
+```
+### 1. Función `get_image_paths_by_class`
+```py
+def get_image_paths_by_class(dataset_folder):
+    X_paths = []
+    y_labels = []
+    for class_name in sorted(os.listdir(dataset_folder)):
+        class_dir = os.path.join(dataset_folder, class_name)
+        if not os.path.isdir(class_dir):
+            continue
+        for fname in os.listdir(class_dir):
+            if not fname.lower().endswith((".jpg", ".jpeg", ".png")):
+                continue
+            X_paths.append(os.path.join(class_dir, fname))
+            y_labels.append(class_name)
+    return X_paths, y_labels
+```
+- Recorre las subcarpetas de `dataset_folder` (cada subcarpeta = una clase/emoción).
+
+- Para cada imagen `.jpg/.jpeg/.png`:
+
+    - Guarda la ruta en `X_paths`.
+
+    - Guarda el nombre de la carpeta (la clase) en `y_labels`.
+
+- Datos devueltos:
+
+    - `X_paths`: lista de rutas de imagen.
+
+    - `y_labels`: lista de etiquetas de clase (strings).
+
+
+### 2. Función `compute_embeddings`
+```py
+def compute_embeddings(image_paths, model_name="Facenet"):
+    embeddings = []
+    valid_labels_idx = []
+    for idx, path in enumerate(image_paths):
+        try:
+            emb_obj = DeepFace.represent(
+                img_path=path,
+                model_name=model_name,
+                enforce_detection=False
+            )
+            embeddings.append(emb_obj[0]["embedding"])
+            valid_labels_idx.append(idx)
+        except Exception as e:
+            print(f"[AVISO] No se pudo procesar {path}: {e}")
+    if len(embeddings) == 0:
+        raise RuntimeError("No se pudo obtener ningún embedding. Revisa el dataset.")
+    return np.asarray(embeddings, dtype="float32"), valid_labels_idx
+```
+- Para cada imagen en `image_paths` llama a `DeepFace.represen`t con `model_name` (por defecto Facenet).
+
+- `enforce_detection=False`: si no detecta cara, no revienta, pero puede devolver algo “raro”.
+
+- Extrae el vector de características `["embedding"]` y lo añade a `embeddings`.
+
+- Si alguna imagen falla, lo captura en un `try/except` y solo imprime un aviso.
+
+- `embeddings`: array N x D de floats (N = nº de imágenes procesadas, D = dimensión del embedding).
+
+- `valid_labels_idx`: índices de las imágenes que sí se pudieron procesar (para filtrar las etiquetas).
+
+### 3. Función `train_emotion_svm`
+```py
+def train_emotion_svm(train_folder, model_output_path, n_splits=5, model_name="Facenet"):
+    # 1) Cargar rutas e etiquetas
+    X_paths, y_labels = get_image_paths_by_class(train_folder)
+    if len(X_paths) == 0:
+        raise RuntimeError("El dataset de entrenamiento está vacío o las rutas son incorrectas.")
+
+    # 2) Embeddings
+    print("[INFO] Calculando embeddings de entrenamiento con DeepFace...")
+    X, valid_idx = compute_embeddings(X_paths, model_name=model_name)
+    y_labels = [y_labels[i] for i in valid_idx]
+
+    # 3) Codificar etiquetas
+    le = LabelEncoder()
+    y = le.fit_transform(y_labels)
+
+    # 4) Escalado + SVM
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    clf = SVC(kernel="rbf", probability=True, class_weight="balanced")
+
+    # 5) Validación cruzada
+    print("[INFO] Validación cruzada (StratifiedKFold)...")
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0)
+    precs = []
+    recs = []
+
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X_scaled, y), start=1):
+        X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
+        y_train, y_val = y[train_idx], y[val_idx]
+
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_val)
+
+        prec = precision_score(y_val, y_pred, average="weighted", zero_division=0)
+        rec = recall_score(y_val, y_pred, average="weighted", zero_division=0)
+        precs.append(prec)
+        recs.append(rec)
+
+        print(f"\n=== Fold {fold} ===")
+        print(f"Precisión (weighted): {prec:.3f}")
+        print(f"Recall    (weighted): {rec:.3f}")
+        print("\nClassification report:")
+        print(classification_report(y_val, y_pred, target_names=le.classes_, zero_division=0))
+        print("Matriz de confusión:")
+        print(confusion_matrix(y_val, y_pred, labels=range(len(le.classes_))))
+
+    print("\n=== Medias sobre los folds (entrenamiento) ===")
+    print(f"Precisión media: {np.mean(precs):.3f}")
+    print(f"Recall medio:    {np.mean(recs):.3f}")
+
+    # 6) Entrenar modelo final con todos los datos de entrenamiento
+    print("\n[INFO] Entrenando modelo final con todo el conjunto de entrenamiento...")
+    clf.fit(X_scaled, y)
+
+    # 7) Guardar a disco
+    model = {
+        "scaler": scaler,
+        "label_encoder": le,
+        "classifier": clf,
+        "deepface_model_name": model_name
+    }
+    with open(model_output_path, "wb") as f:
+        pickle.dump(model, f)
+
+    print(f"[INFO] Modelo guardado en: {model_output_path}")
+```
+#### 3.1 Cargar rutas y etiquetas
+
+- Obtiene todas las rutas e etiquetas del conjunto de entrenamiento.
+
+- Si no hay imágenes, lanza error.
+
+#### 3.2 Calcular embeddings
+
+- Calcula los embeddings `X`.
+
+- Filtra `y_labels` para quedarse solo con las que tienen embedding válido.
+
+#### 3.3 Codificar etiquetas
+
+- Convierte las etiquetas de texto (p.ej. "happy", "sad") a enteros (0, 1, 2, …).
+
+- Guarda el `LabelEncoder` para usarlo luego en test.
+
+#### 3.4 Escalado + definición del SVM
+
+- StandardScaler: centra y escala los embeddings (media 0, varianza 1) → importante para SVM.
+
+- SVC con:
+
+    - kernel="rbf": kernel gaussiano.
+
+    - probability=True: permite predict_proba.
+
+    - class_weight="balanced": ajusta el peso de cada clase según su frecuencia (para datasets desbalanceados).
+
+#### 3.5 Validación Cruzada
+
+- Usa StratifiedKFold para mantener la proporción de clases en cada fold.
+
+- Divide datos en train/valid por fold.
+
+- Entrena el SVM en X_train, y_train.
+
+- Evalúa en X_val, y_val.
+
+- Calcula precisión y recall ponderados (average="weighted").
+
+- Imprime:
+
+    - precisión y recall por fold.
+
+    - classification_report por clase.
+
+    - matriz de confusión.
+
+#### 3.6 Entrenar modelo final y guardar
+
+- Reentrena el SVM usando todos los datos de entrenamiento (no solo un fold).
+
+- Guarda en un pickle:
+
+    - el escalador,
+
+    - el codificador de etiquetas,
+
+    - el clasificador entrenado,
+
+    - el nombre del modelo de DeepFace utilizado.
+
+### 4. Función evaluate_on_folder
+```py
+ef evaluate_on_folder(test_folder, model_path):
+    # 1) Cargar modelo
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    scaler = model["scaler"]
+    le = model["label_encoder"]
+    clf = model["classifier"]
+    model_name = model.get("deepface_model_name", "Facenet")
+
+    # 2) Cargar rutas e etiquetas reales
+    X_paths, y_labels = get_image_paths_by_class(test_folder)
+    if len(X_paths) == 0:
+        raise RuntimeError("El dataset de test está vacío o las rutas son incorrectas.")
+
+    print("[INFO] Calculando embeddings de test con DeepFace...")
+    X_test, valid_idx = compute_embeddings(X_paths, model_name=model_name)
+    y_labels = [y_labels[i] for i in valid_idx]
+    y_true = le.transform(y_labels)
+
+    # 3) Escalar y predecir
+    X_test_scaled = scaler.transform(X_test)
+    y_pred = clf.predict(X_test_scaled)
+
+    # 4) Métricas
+    print("\n=== Evaluación en el conjunto de test ===")
+    print("Classification report:")
+    print(classification_report(y_true, y_pred, target_names=le.classes_, zero_division=0))
+    print("Matriz de confusión:")
+    print(confusion_matrix(y_true, y_pred, labels=range(len(le.classes_))))
+```
+#### 4.1 Cargar modelo
+
+- Lee del disco todo lo que guardaste.
+
+- Si no encuentra el nombre del modelo, usa "Facenet" por defecto.
+
+#### 4.2 Cargar y procesar imágenes de test
+
+- Obtiene rutas y etiquetas del conjunto de test.
+
+- Calcula embeddings con el mismo modelo DeepFace que en entrenamiento.
+
+- Filtra etiquetas según valid_idx.
+
+- y_true: etiquetas reales en forma numérica, usando el mismo LabelEncoder.
+
+#### 4.3 Escalar, predecir y evaluar
+
+- Aplica el mismo escalado que en entrenamiento.
+
+- Predice con el SVM.
+
+- Imprime informe de clasificación y matriz de confusión sobre el conjunto de test.
+
+
+### 5. Bloque principal (`if __name__ == "__main__":`)
+```py
+if __name__ == "__main__":
+    DATA_ROOT = r"C:\Users\luisp\Desktop\VC\emotions"
+
+    TRAIN_DIR = os.path.join(DATA_ROOT, "train")  # aquí entrenas
+    TEST_DIR  = os.path.join(DATA_ROOT, "test")        # aquí evalúas
+
+    MODEL_PATH = "modelo_emociones_svm.pkl"
+
+    # Entrenar
+    train_emotion_svm(TRAIN_DIR, MODEL_PATH, n_splits=5, model_name="Facenet")
+
+    # Evaluar
+    evaluate_on_folder(TEST_DIR, MODEL_PATH)
+
+```
+- Define la ruta base del dataset.
+
+- Especifica carpetas de train y test.
+
+- Define dónde guardar el modelo (modelo_emociones_svm.pkl).
+
+- Llama primero a train_emotion_svm, luego a evaluate_on_folder.
+
+En resumen: El script recorre las carpetas de emociones, extrae embeddings faciales con DeepFace (Facenet), los escala, entrena un SVM con validación cruzada estratificada, guarda el modelo (escalador + encoder + SVM) y después carga ese modelo para evaluar automáticamente en un conjunto de test, mostrando informe de clasificación y matriz de confusión.
+
+### Resultados del entrenamiento 
+Los resultados del entrenamiento han sido los siguientes:
+
+=== Fold 1 ===
+
+Precisión (weighted): 0.532
+
+Recall    (weighted): 0.524
+
+Classification report:
+
+              precision    recall  f1-score   support
+
+    angry       0.44      0.50      0.47       799
+
+    disgusted       0.56      0.52      0.54        88
+
+    fearful       0.44      0.32      0.37       819
+
+    happy       0.71      0.62      0.66      1443
+
+    neutral       0.52      0.52      0.52       993
+
+        sad       0.40      0.49      0.44       966
+
+    surprised       0.57      0.66      0.61       634
+    
+Resumen: 
+
+    accuracy                           0.52      5742
+
+    macro avg       0.52      0.52      0.52      5742
+
+    weighted avg       0.53      0.52      0.52      5742
+
+Matriz de confusión:
+
+    [[399  15  61  62  87 140  35]
+
+    [ 21  46   5   5   1  10   0]
+    
+    [ 113    6   72 1086  185  230   82]
+
+    [ 129    4   66  139  614  198   83]
+
+    [ 180   17  109   98  179  598   66]
+
+    [  42    4   70   43   42   64  566]]
+
+
+
+A continuación vemos el código donde probamos el modelo entrenado, hemos de comentar que funciona mucho mejor el modelo de deepface, pero si detecta algunas emociones, auqnue no de manera estable.
 
 ```py
 import cv2
