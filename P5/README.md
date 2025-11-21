@@ -434,3 +434,7 @@ es el bucle principal que enciende la cámara, gestiona la detección de caras c
 
 ## Recursos usados
 
+- Apuntes del profesorado
+- [Doc de pygame](https://www.pygame.org/docs/ref/mixer.html)
+- [deepface de Pypi](https://pypi.org/project/deepface/)
+- ChatGPT como ajustador de parámetros y debuggeador.
